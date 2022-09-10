@@ -43,3 +43,5 @@
 /var/package/*
 !/var/package/*.xml
 
+test.tdb
+tsv.bin
