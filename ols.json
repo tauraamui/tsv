@@ -3,6 +3,10 @@
         {
             "name": "core",
             "path": "/usr/local/bin/core"
+        },
+        {
+            "name": "shared",
+            "path": "src"
         }
     ],
     "enable_document_symbols": true,
