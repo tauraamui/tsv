@@ -3,6 +3,7 @@ package main
 import "core:fmt"
 import "core:os"
 import "core:log"
+import "core:sync"
 
 TEST_FILE_PATH :: "test.tdb"
 KATTAS_BIRTHDAY :: 0x132BB6C
@@ -65,6 +66,9 @@ allocate_event_block :: proc(fd: os.Handle, e: EventBlock) -> os.Errno {
 }
 
 main :: proc() {
+    context.logger = log.create_console_logger(log.Level.Debug)
+    log.info("running TSV prototype")
+    log.infof("removing %s\n", TEST_FILE_PATH)
     os.remove(TEST_FILE_PATH)
     f, err := os.open(TEST_FILE_PATH, os.O_RDWR|os.O_CREATE, MODE_PERM)
     if err != os.ERROR_NONE {
