@@ -21,6 +21,15 @@ write_header_to :: proc(fd: os.Handle, h: FileHeader) -> os.Errno {
     return os.ERROR_NONE
 }
 
+read_header :: proc(fd: os.Handle) -> FileHeader {
+    data_to_read := [8]u8{}
+    os.read(fd, data_to_read[:8])
+    return FileHeader{
+        magic=bytesToU32(data_to_read[:4]),
+        root_ei_pos=bytesToU32(data_to_read[4:8]),
+    }
+}
+
 EventBlockHeader :: struct {
     id:   u32,
     size: u32,
@@ -51,4 +60,9 @@ u32ToBytes :: proc(n: u32, d: []u8) {
     d[1] = u8(n >> 8)
     d[2] = u8(n >> 16)
     d[3] = u8(n >> 24)
+}
+
+bytesToU32 :: proc(d: []u8) -> u32 {
+    assert(len(d) == 4)
+    return u32(d[0]) | u32(d[1])<<8 | u32(d[2])<<16 | u32(d[3])<<24
 }

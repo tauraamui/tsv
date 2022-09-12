@@ -49,8 +49,22 @@ make_test_db :: proc() {
     }
 }
 
+acquire_tsv_file_total_time_period :: proc(path: string) -> time.Time {
+    f, err := os.open(TEST_FILE_PATH, os.O_RDWR, MODE_PERM)
+    if err != os.ERROR_NONE {
+        fmt.printf("error: %d\n", err)
+    }
+    defer os.close(f)
+
+    head := tsv.read_header(f)
+    log.infof("MAGIC: %d, REL POS OF ROOT EVENT INDEX: %d", head.magic, size_of(head)+head.root_ei_pos)
+
+    return time.now()
+}
+
 main :: proc() {
     context.logger = log.create_console_logger(log.Level.Debug)
     log.info("running TSV prototype")
-    make_test_db()
+    // make_test_db()
+    acquire_tsv_file_total_time_period(TEST_FILE_PATH)
 }
