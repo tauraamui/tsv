@@ -30,6 +30,18 @@ read_header :: proc(fd: os.Handle) -> FileHeader {
     }
 }
 
+read_event_block_header :: proc(fd: os.Handle) -> EventBlockHeader {
+    data_to_read := [16]u8{}
+    os.read(fd, data_to_read[:16])
+
+    return EventBlockHeader{
+        id=bytesToU32(data_to_read[:4]),
+        size=bytesToU32(data_to_read[4:8]),
+        start_time=bytesToU32(data_to_read[8:12]),
+        elapsed_duration=bytesToU32(data_to_read[12:16]),
+    }
+}
+
 EventBlockHeader :: struct {
     id:   u32,
     size: u32,

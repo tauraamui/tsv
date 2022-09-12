@@ -23,6 +23,7 @@ make_test_db :: proc() {
     head := tsv.FileHeader{
         magic = KATTAS_BIRTHDAY,
     }
+    head.root_ei_pos = size_of(head)
     log.infof("Size of file header: %v", size_of(head))
     log.infof("writing header to %s", TEST_FILE_PATH)
     if err :=  tsv.write_header_to(f, head); err != os.ERROR_NONE {
@@ -39,7 +40,7 @@ make_test_db :: proc() {
         size=128,
         start_time=time_unix_u32,
         // in seconds this is about 3 days
-        elapsed_duration=10800,
+        elapsed_duration=259200,
     }
     log.infof("Size of event block header: %v", size_of(evt))
     log.infof("alloc'ing events block to %s", TEST_FILE_PATH)
@@ -59,12 +60,21 @@ acquire_tsv_file_total_time_period :: proc(path: string) -> time.Time {
     head := tsv.read_header(f)
     log.infof("MAGIC: %d, REL POS OF ROOT EVENT INDEX: %d", head.magic, size_of(head)+head.root_ei_pos)
 
+    os.seek(f, i64(head.root_ei_pos), 0)
+
+    event_head := tsv.read_event_block_header(f)
+
+    log.infof("START UNIX: %d, END UNIX: %d", event_head.start_time, event_head.start_time+event_head.elapsed_duration)
+    start := time.unix(i64(event_head.start_time), 0)
+    end := time.unix(i64(event_head.start_time+event_head.elapsed_duration), 0)
+    log.infof("START DATE: %d-%d-%d | END DATE: %d-%d-%d", time.date(start), time.date(end))
+
     return time.now()
 }
 
 main :: proc() {
     context.logger = log.create_console_logger(log.Level.Debug)
     log.info("running TSV prototype")
-    // make_test_db()
+    make_test_db()
     acquire_tsv_file_total_time_period(TEST_FILE_PATH)
 }
