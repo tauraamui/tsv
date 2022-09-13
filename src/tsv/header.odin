@@ -21,6 +21,15 @@ write_header_to :: proc(fd: os.Handle, h: FileHeader) -> os.Errno {
     return os.ERROR_NONE
 }
 
+read_header_v2 :: proc(reader: Reader) -> FileHeader {
+    data_to_read := [8]u8{}
+    reader.reader_fn(reader.reader_context, data_to_read[:8])
+    return FileHeader{
+        magic=bytesToU32(data_to_read[:4]),
+        root_ei_pos=bytesToU32(data_to_read[4:8]),
+    }
+}
+
 read_header :: proc(fd: os.Handle) -> FileHeader {
     data_to_read := [8]u8{}
     os.read(fd, data_to_read[:8])
