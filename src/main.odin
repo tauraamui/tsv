@@ -11,6 +11,24 @@ TEST_FILE_PATH :: "test.tdb"
 KATTAS_BIRTHDAY :: 0x132BB6C
 MODE_PERM :: 0o0777
 
+os_seek :: proc(handle: rawptr, offset: i64, whence: int) -> (i64, int) {
+    ptr := cast(^os.Handle)handle
+    a, b := os.seek(ptr^, offset, whence)
+    return a, cast(int)b
+}
+
+os_read :: proc(handle: rawptr, data: []byte) -> (int, int) {
+    ptr := cast(^os.Handle)handle
+    a, b := os.read(ptr^, data)
+    return a, cast(int)b
+}
+
+os_write :: proc(handle: rawptr, data: []byte) -> (int, int) {
+	ptr := cast(^os.Handle)handle
+	a, b := os.write(ptr^, data)
+	return a, cast(int)b
+}
+
 remove_test_db :: proc() {
     os.remove(TEST_FILE_PATH)
 }
@@ -71,6 +89,12 @@ make_test_db :: proc() {
     }
 }
 
+resolve_total_time_duration :: proc(reader: tsv.Reader) {
+    head := tsv.read_header_v2(reader)
+    reader.seek_fn(reader.reader_context, size_of(head), 0)
+    log.infof("head magic: %d", head.magic)
+}
+
 acquire_tsv_file_total_time_duration :: proc(path: string) -> time.Duration {
     f, err := os.open(TEST_FILE_PATH, os.O_RDWR, MODE_PERM)
     if err != os.ERROR_NONE {
@@ -96,6 +120,15 @@ Tsv_Logger_Opts :: log.Options{
 }
 
 main :: proc() {
+    f, err := os.open(TEST_FILE_PATH, os.O_RDWR, MODE_PERM)
+    if err != os.ERROR_NONE {
+        fmt.printf("error: %d\n", err)
+    }
+    defer os.close(f)
+
+    reader := tsv.make_reader(os_read, os_seek, cast(rawptr)&f)
+    writer := tsv.make_writer(os_write, cast(rawptr)&f)
+
     logger := log.create_console_logger(log.Level.Debug, Tsv_Logger_Opts)
     context.logger = logger
     log.info("running TSV prototype")
@@ -103,6 +136,7 @@ main :: proc() {
     remove_test_db()
     make_test_db()
 
-    dur := acquire_tsv_file_total_time_duration(TEST_FILE_PATH)
-    log.infof("%s contains %d seconds of footage", TEST_FILE_PATH, u32(time.duration_seconds(dur)))
+    resolve_total_time_duration(reader)
+    // dur := acquire_tsv_file_total_time_duration(TEST_FILE_PATH)
+    // log.infof("%s contains %d seconds of footage", TEST_FILE_PATH, u32(time.duration_seconds(dur)))
 }
