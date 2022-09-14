@@ -8,15 +8,18 @@ Header :: struct {
 }
 
 @(private)
-read_header :: proc(reader: Reader) -> Header {
+read_header :: proc(reader: Reader) -> (Header, bool) {
     data_to_read := [14]uint8{}
-    reader.reader_fn(reader.reader_context, data_to_read[:8])
+    if ok := read_sized(reader, data_to_read[:]); !ok {
+        return Header{}, ok
+    }
+
     return Header{
         magic=bytesToUint32(data_to_read[:4]),
         frame_size=bytesToUint32(data_to_read[4:8]),
         root_ei_pos=bytesToUint32(data_to_read[8:12]),
         fps=bytesToUint16(data_to_read[12:14]),
-    }
+    }, true
 }
 
 @(private)

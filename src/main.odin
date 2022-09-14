@@ -120,11 +120,11 @@ create_test_db_file_handle :: proc() -> (os.Handle, os.Errno) {
 // }
 
 Tsv_Logger_Opts :: log.Options{
-	.Level,
+	// .Level,
 	.Terminal_Color,
-	.Short_File_Path,
-	.Line,
-	.Procedure,
+	// .Short_File_Path,
+	// .Line,
+	// .Procedure,
 }
 
 main :: proc() {
@@ -137,7 +137,7 @@ main :: proc() {
     reader := tsv.make_reader(os_read, os_seek, cast(rawptr)&f)
     writer := tsv.make_writer(os_write, os_seek, cast(rawptr)&f)
 
-    logger := log.create_console_logger(log.Level.Debug, Tsv_Logger_Opts)
+    logger := log.create_console_logger(log.Level.Info, Tsv_Logger_Opts)
     context.logger = logger
     log.info("running TSV prototype")
 
@@ -147,6 +147,16 @@ main :: proc() {
         log.panic("ERROR: unable to create new tsv DB")
     }
 
-    tsvid := tsv.load(reader)
+    tsvid, ok := tsv.load(reader)
+    if !ok {
+        log.panic("ERROR: unable to load tsv DB")
+    }
+
     log.infof("magic: %d", tsvid.header.magic)
+
+    tsvid.header.frame_size = 1024
+    tsvid.header.fps = 25
+    if ok := tsv.store(writer, tsvid); !ok {
+        log.panic("ERROR: unable to update tsv DB")
+    }
 }

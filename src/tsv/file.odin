@@ -19,13 +19,17 @@ new :: proc() -> TimeSeriesVideo {
     }
 }
 
-load :: proc(r: Reader) -> TimeSeriesVideo {
+load :: proc(r: Reader) -> (TimeSeriesVideo, bool) {
     // ensure read at start
     seek_reader(r, 0)
-    tsv := TimeSeriesVideo{
-        header=read_header(r),
+    head, ok := read_header(r)
+    if !ok {
+        return TimeSeriesVideo{}, false
     }
-    return tsv
+    tsv := TimeSeriesVideo{
+        header=head,
+    }
+    return tsv, true
 }
 
 store :: proc(w: Writer, tsv: TimeSeriesVideo) -> bool {
