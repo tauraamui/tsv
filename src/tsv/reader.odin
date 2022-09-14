@@ -14,14 +14,14 @@ make_reader :: proc(reader_fn: ReaderFn, seek_fn: SeekFn, reader_context: rawptr
     return Reader{reader_context=reader_context, reader_fn=reader_fn, seek_fn=seek_fn}
 }
 
-seek :: proc(reader: ^Reader, offset: i64) -> (ok: bool) {
+seek_reader :: proc(reader: Reader, offset: i64) -> (ok: bool) {
 	ok = true
 	_, err_code := reader.seek_fn(reader.reader_context, offset, 0)
 	ok = err_code == 0
 	return
 }
 
-read_sized :: proc(reader: ^Reader, data: []u8) -> (ok: bool) {
+read_sized :: proc(reader: Reader, data: []u8) -> (ok: bool) {
 	ok = true
 	size := len(data)
 	n := 0

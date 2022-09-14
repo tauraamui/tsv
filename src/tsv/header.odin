@@ -1,81 +1,60 @@
 package tsv
 
-import "core:os"
-
-FileHeader :: struct {
-    magic:             u32,
-    root_ei_pos:       u32,
+Header :: struct {
+    magic:             uint32,
+    frame_size:        uint32,
+    root_ei_pos:       uint32,
+    fps:               uint16,
 }
 
-write_header_to :: proc(fd: os.Handle, h: FileHeader) -> os.Errno {
-    data_to_write := [8]u8{}
-
-    u32ToBytes(h.magic, data_to_write[:4])
-    u32ToBytes(h.root_ei_pos, data_to_write[4:8])
-
-    n, err := os.write(fd, data_to_write[:8])
-    if err != os.ERROR_NONE {
-        return err
-    }
-
-    return os.ERROR_NONE
-}
-
-read_header_v2 :: proc(reader: Reader) -> FileHeader {
-    data_to_read := [8]u8{}
+@(private)
+read_header :: proc(reader: Reader) -> Header {
+    data_to_read := [14]uint8{}
     reader.reader_fn(reader.reader_context, data_to_read[:8])
-    return FileHeader{
-        magic=bytesToU32(data_to_read[:4]),
-        root_ei_pos=bytesToU32(data_to_read[4:8]),
+    return Header{
+        magic=bytesToUint32(data_to_read[:4]),
+        frame_size=bytesToUint32(data_to_read[4:8]),
+        root_ei_pos=bytesToUint32(data_to_read[8:12]),
+        fps=bytesToUint16(data_to_read[12:14]),
     }
 }
 
-read_header :: proc(fd: os.Handle) -> FileHeader {
-    data_to_read := [8]u8{}
-    os.read(fd, data_to_read[:8])
-    return FileHeader{
-        magic=bytesToU32(data_to_read[:4]),
-        root_ei_pos=bytesToU32(data_to_read[4:8]),
-    }
+@(private)
+write_header :: proc(writer: Writer, head: Header) -> bool {
+    dst := [14]uint8{}
+
+    uint32ToBytes(head.magic, dst[:4])
+    uint32ToBytes(head.frame_size, dst[4:8])
+    uint32ToBytes(head.root_ei_pos, dst[8:12])
+    uint16ToBytes(head.fps, dst[12:14])
+
+    return write_sized(writer, dst[:])
 }
 
-read_event_block_header :: proc(fd: os.Handle) -> EventBlockHeader {
-    data_to_read := [16]u8{}
-    os.read(fd, data_to_read[:16])
+@(private)
+alloc_header_to_bytes :: proc(head: Header) -> []u8 {
+    b := make([]uint8, size_of(head))
 
-    return EventBlockHeader{
-        id=bytesToU32(data_to_read[:4]),
-        size=bytesToU32(data_to_read[4:8]),
-        start_time=bytesToU32(data_to_read[8:12]),
-        elapsed_duration=bytesToU32(data_to_read[12:16]),
-    }
+    uint32ToBytes(head.magic, b[:4])
+    uint32ToBytes(head.frame_size, b[4:8])
+    uint32ToBytes(head.root_ei_pos, b[8:12])
+    uint16ToBytes(head.fps, b[12:14])
+
+    return b
 }
 
-EventBlockHeader :: struct {
-    id:   u32,
-    size: u32,
-    start_time: u32,
-    elapsed_duration: u32,
+uint8ToBytes :: proc(n: uint8, d: []uint8) {
+    assert(len(d) == 1)
+    d[0] = u8(n)
 }
 
-write_empty_event_block :: proc(fd: os.Handle, e: EventBlockHeader) -> os.Errno {
-    data := make([]u8, size_of(e)+e.size)
-    defer delete(data)
-
-    u32ToBytes(e.id, data[:4])
-    u32ToBytes(size_of(e)+e.size, data[4:8])
-    u32ToBytes(e.start_time, data[8:12])
-    u32ToBytes(e.elapsed_duration, data[12:16])
-
-    _, err := os.write(fd, data)
-    if err != os.ERROR_NONE {
-        return err
-    }
-
-    return os.ERROR_NONE
+uint16ToBytes :: proc(n: uint16, d: []uint8) {
+    assert(len(d) == 2)
+    d[0] = u8(n)
+    d[1] = u8(n >> 8)
 }
 
-u32ToBytes :: proc(n: u32, d: []u8) {
+uint32ToBytes :: proc(n: uint32, d: []uint8) {
     assert(len(d) == 4)
     d[0] = u8(n)
     d[1] = u8(n >> 8)
@@ -83,7 +62,17 @@ u32ToBytes :: proc(n: u32, d: []u8) {
     d[3] = u8(n >> 24)
 }
 
-bytesToU32 :: proc(d: []u8) -> u32 {
+bytesToUint8 :: proc(d: []uint8) -> uint8 {
+    assert(len(d) == 1)
+    return u8(d[0])
+}
+
+bytesToUint16 :: proc(d: []uint8) -> uint16 {
+    assert(len(d) == 2)
+    return u16(d[0]) | u16(d[1])<<8
+}
+
+bytesToUint32 :: proc(d: []uint8) -> uint32 {
     assert(len(d) == 4)
     return u32(d[0]) | u32(d[1])<<8 | u32(d[2])<<16 | u32(d[3])<<24
 }
