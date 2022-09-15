@@ -154,8 +154,8 @@ main :: proc() {
 
     log.infof("magic: %d", tsvid.header.magic)
 
-    tsvid.header.frame_size = 1024
-    tsvid.header.fps = 25
+    tsvid.root_events_block_header.frame_size = 2000
+    tsvid.root_events_block_header.fps = 25
     if ok := tsv.store(writer, tsvid); !ok {
         log.panic("ERROR: unable to update tsv DB")
     }

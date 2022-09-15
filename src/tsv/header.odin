@@ -2,34 +2,28 @@ package tsv
 
 Header :: struct {
     magic:             uint32,
-    frame_size:        uint32,
     root_ei_pos:       uint32,
-    fps:               uint16,
 }
 
 @(private)
 read_header :: proc(reader: Reader) -> (Header, bool) {
-    data_to_read := [14]uint8{}
+    data_to_read := [8]uint8{}
     if ok := read_sized(reader, data_to_read[:]); !ok {
         return Header{}, ok
     }
 
     return Header{
         magic=bytesToUint32(data_to_read[:4]),
-        frame_size=bytesToUint32(data_to_read[4:8]),
-        root_ei_pos=bytesToUint32(data_to_read[8:12]),
-        fps=bytesToUint16(data_to_read[12:14]),
+        root_ei_pos=bytesToUint32(data_to_read[4:8]),
     }, true
 }
 
 @(private)
 write_header :: proc(writer: Writer, head: Header) -> bool {
-    dst := [14]uint8{}
+    dst := [8]uint8{}
 
     uint32ToBytes(head.magic, dst[:4])
-    uint32ToBytes(head.frame_size, dst[4:8])
-    uint32ToBytes(head.root_ei_pos, dst[8:12])
-    uint16ToBytes(head.fps, dst[12:14])
+    uint32ToBytes(head.root_ei_pos, dst[4:8])
 
     return write_sized(writer, dst[:])
 }
@@ -39,9 +33,7 @@ alloc_header_to_bytes :: proc(head: Header) -> []u8 {
     b := make([]uint8, size_of(head))
 
     uint32ToBytes(head.magic, b[:4])
-    uint32ToBytes(head.frame_size, b[4:8])
-    uint32ToBytes(head.root_ei_pos, b[8:12])
-    uint16ToBytes(head.fps, b[12:14])
+    uint32ToBytes(head.root_ei_pos, b[4:8])
 
     return b
 }
