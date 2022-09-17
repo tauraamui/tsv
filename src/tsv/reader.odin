@@ -1,7 +1,14 @@
 package tsv
 
-SeekFn :: proc(_: rawptr, _: i64, _: int) -> (i64, int)
-ReaderFn :: proc(_: rawptr, _: []byte) -> (int, int)
+import "core:log"
+
+ExternalError :: struct {
+	id:  int,
+	msg: string,
+}
+
+SeekFn :: proc(_: rawptr, _: i64, _: int) -> (i64, ExternalError)
+ReaderFn :: proc(_: rawptr, _: []byte) -> (int, ExternalError)
 
 @(private)
 Reader :: struct {
@@ -15,26 +22,26 @@ make_reader :: proc(reader_fn: ReaderFn, seek_fn: SeekFn, reader_context: rawptr
 }
 
 @(private)
-seek_reader :: proc(reader: Reader, offset: i64) -> (ok: bool) {
-	ok = true
-	_, err_code := reader.seek_fn(reader.reader_context, offset, 0)
-	ok = err_code == 0
-	return
+seek_reader :: proc(reader: Reader, offset: i64) -> (bool, ExternalError) {
+	_, err := reader.seek_fn(reader.reader_context, offset, 0)
+	if err.id == 0 {
+		return true, ExternalError{}
+	}
+	return false, err
 }
 
 @(private)
-read_sized :: proc(reader: Reader, data: []u8) -> (ok: bool) {
-	ok = true
+read_sized :: proc(reader: Reader, data: []u8) -> (bool, ExternalError) {
 	size := len(data)
 	n := 0
-
+	ok := true
+	err: ExternalError
 	for n < size && ok {
 		read: int
-		err_code: int
 
-		read, err_code = reader.reader_fn(reader.reader_context, data[n:])
+		read, err = reader.reader_fn(reader.reader_context, data[n:])
 
-		ok = err_code == 0
+		ok = err.id == 0
 
 		n += read
 	}
@@ -43,5 +50,9 @@ read_sized :: proc(reader: Reader, data: []u8) -> (ok: bool) {
 		ok = true
 	}
 
-	return
+	if !ok {
+		return false, err
+	}
+
+	return ok, ExternalError{}
 }

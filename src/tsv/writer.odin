@@ -3,7 +3,7 @@ package tsv
 import "core:sync"
 import "core:log"
 
-WriterFn :: proc(_: rawptr, _: []byte) -> (int, int)
+WriterFn :: proc(_: rawptr, _: []byte) -> (int, ExternalError)
 
 @(private)
 Writer :: struct {
@@ -22,22 +22,20 @@ make_writer :: proc(writer_fn: WriterFn, seek_fn: SeekFn, writer_context: rawptr
 }
 
 @(private)
-seek_writer :: proc(writer: Writer, offset: i64) -> (ok: bool) {
+seek_writer :: proc(writer: Writer, offset: i64) -> (bool, ^ExternalError) {
 	log.debug("seeking writer to", offset)
-
-	ok = true
-	_, err_code := writer.seek_fn(writer.writer_context, offset, 0)
-	ok = err_code == 0
-	return
+	_, err := writer.seek_fn(writer.writer_context, offset, 0)
+	if err.id == 0 {
+		return true, nil
+	}
+	return false, &err
 }
 
 @(private)
-write_sized :: proc(writer: Writer, data: []byte) -> bool {
-    written, err := writer.writer_fn(writer.writer_context, data)
-
-    if (err != 0) {
-        return false
-    }
-
-    return true
+write_sized :: proc(writer: Writer, data: []byte) -> (bool, ^ExternalError) {
+    _, err := writer.writer_fn(writer.writer_context, data)
+	if err.id == 0 {
+		return true, nil
+	}
+    return false, &err
 }

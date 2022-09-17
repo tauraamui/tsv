@@ -1,5 +1,7 @@
 package tsv
 
+import "core:fmt"
+
 @(private)
 Header :: struct {
     magic:             uint32,
@@ -7,26 +9,40 @@ Header :: struct {
 }
 
 @(private)
-read_header :: proc(reader: Reader) -> (Header, bool) {
+read_header :: proc(reader: Reader) -> (Header, Error) {
     data_to_read := [8]uint8{}
-    if ok := read_sized(reader, data_to_read[:]); !ok {
-        return Header{}, ok
+    if ok, err := read_sized(reader, data_to_read[:]); !ok {
+        return Header{}, Error{
+            id=ERROR_READ,
+            msg=fmt.tprintf("failed to read: %s", err.msg),
+        }
     }
 
     return Header{
         magic=bytesToUint32(data_to_read[:4]),
         root_ei_pos=bytesToUint32(data_to_read[4:8]),
-    }, true
+    }, Error{
+        id=ERROR_NONE,
+    } 
 }
 
 @(private)
-write_header :: proc(writer: Writer, head: Header) -> bool {
+write_header :: proc(writer: Writer, head: Header) -> (bool, Error) {
     dst := [8]uint8{}
 
     uint32ToBytes(head.magic, dst[:4])
     uint32ToBytes(head.root_ei_pos, dst[4:8])
 
-    return write_sized(writer, dst[:])
+    if ok, err := write_sized(writer, dst[:]); !ok {
+        return false, Error{
+            id=ERROR_WRITE,
+            msg=fmt.tprintf("failed to write: %s", err.msg),
+        }
+    }
+
+    return true, Error{
+        id=ERROR_NONE,
+    }
 }
 
 @(private)

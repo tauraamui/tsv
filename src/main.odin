@@ -10,27 +10,43 @@ import "core:log"
 TEST_FILE_PATH :: "test.tdb"
 MODE_PERM :: 0o0777
 
-os_seek :: proc(handle: rawptr, offset: i64, whence: int) -> (i64, int) {
+os_seek :: proc(handle: rawptr, offset: i64, whence: int) -> (i64, tsv.ExternalError) {
     ptr := cast(^os.Handle)handle
     file_size, err := os.file_size(ptr^)
-    log.debug("file size", file_size)
-    if file_size == 0 || err != os.ERROR_NONE {
-        return 0, cast(int)err
+    if err != os.ERROR_NONE {
+        return 0, tsv.ExternalError{
+            id=333,
+            msg="unable to stat file",
+        }
+    }
+    if file_size == 0 {
+        return 0, tsv.ExternalError{
+            id=334,
+            msg="unable to seek within empty file",
+        }
     }
     a, b := os.seek(ptr^, offset, whence)
-    return a, cast(int)b
+    return a, tsv.ExternalError{
+        id=cast(int)b,
+    }
 }
 
-os_read :: proc(handle: rawptr, data: []byte) -> (int, int) {
+os_read :: proc(handle: rawptr, data: []byte) -> (int, tsv.ExternalError) {
     ptr := cast(^os.Handle)handle
     a, b := os.read(ptr^, data)
-    return a, cast(int)b
+    err := tsv.ExternalError{
+        id=cast(int)b,
+    }
+    return a, err
 }
 
-os_write :: proc(handle: rawptr, data: []byte) -> (int, int) {
+os_write :: proc(handle: rawptr, data: []byte) -> (int, tsv.ExternalError) {
 	ptr := cast(^os.Handle)handle
 	a, b := os.write(ptr^, data)
-	return a, cast(int)b
+    err := tsv.ExternalError{
+        id=cast(int)b,
+    }
+	return a, err
 }
 
 remove_test_db :: proc() {
@@ -137,12 +153,14 @@ main :: proc() {
     reader := tsv.make_reader(os_read, os_seek, cast(rawptr)&f)
     writer := tsv.make_writer(os_write, os_seek, cast(rawptr)&f)
 
-    logger := log.create_console_logger(log.Level.Info, Tsv_Logger_Opts)
+    logger := log.create_console_logger(log.Level.Debug, Tsv_Logger_Opts)
     context.logger = logger
     log.info("running TSV prototype")
 
     tsvdb := tsv.new(reader, writer)
-    tsv.open(&tsvdb)
+    if err := tsv.open(&tsvdb); err.id != tsv.ERROR_NONE {
+        log.fatalf("unable to open tsv db: %s", err.msg)
+    }
 
     // new_tsvid := tsv.new()
     // log.debug("writing new db")

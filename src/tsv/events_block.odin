@@ -1,5 +1,7 @@
 package tsv
 
+import "core:fmt"
+
 EventsBlockHeader :: struct {
     id:         uint32,
     max_cap:    uint32,
@@ -10,10 +12,13 @@ EventsBlockHeader :: struct {
 }
 
 @(private)
-read_events_block_header :: proc(r: Reader) -> (EventsBlockHeader, bool) {
+read_events_block_header :: proc(r: Reader) -> (EventsBlockHeader, Error) {
     dat := [24]uint8{}
-    if ok := read_sized(r, dat[:]); !ok {
-        return EventsBlockHeader{}, ok
+    if ok, err := read_sized(r, dat[:]); !ok {
+        return EventsBlockHeader{}, Error{
+            id=ERROR_READ,
+            msg=fmt.tprintf("failed to read: %s", err.msg),
+        }
     }
 
     return EventsBlockHeader{
@@ -23,11 +28,13 @@ read_events_block_header :: proc(r: Reader) -> (EventsBlockHeader, bool) {
         duration=bytesToUint32(dat[12:16]),
         fps=bytesToUint32(dat[16:20]),
         frame_size=bytesToUint32(dat[20:24]),
-    }, true
+    }, Error{
+        id=ERROR_NONE,
+    }
 }
 
 @(private)
-write_events_block_header :: proc(writer: Writer, head: EventsBlockHeader) -> bool {
+write_events_block_header :: proc(writer: Writer, head: EventsBlockHeader) -> Error {
     dst := [24]uint8{}
 
     uint32ToBytes(head.id, dst[:4])
@@ -37,5 +44,14 @@ write_events_block_header :: proc(writer: Writer, head: EventsBlockHeader) -> bo
     uint32ToBytes(head.fps, dst[16:20])
     uint32ToBytes(head.frame_size, dst[20:24])
 
-    return write_sized(writer, dst[:])
+    if ok, err := write_sized(writer, dst[:]); !ok {
+        return Error{
+            id=ERROR_WRITE,
+            msg=fmt.tprintf("failed to write events block header: %s", err.msg),
+        }
+    }
+
+    return Error{
+        id=ERROR_NONE,
+    }
 }

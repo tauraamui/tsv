@@ -1,6 +1,7 @@
 package tsv
 
 import "core:log"
+import "core:fmt"
 
 @(private)
 MAGIC :: 0x132BB6C
@@ -31,9 +32,46 @@ new :: proc(r: Reader, w: Writer) -> TimeSeriesVideo {
     }
 }
 
-open :: proc(tsv: ^TimeSeriesVideo) {
-    seek_reader(tsv.seeker_reader, 0)
-    head, ok := read_header(tsv.seeker_reader)
+open :: proc(tsv: ^TimeSeriesVideo) -> Error {
+    if ok, err := seek_reader(tsv.seeker_reader, 0); !ok {
+        return Error{
+            id=ERROR_SEEK,
+            msg=fmt.tprintf("failed to seek: %s", err.msg),
+        }
+    }
+
+    head, err := read_header(tsv.seeker_reader)
+    if err.id != ERROR_NONE {
+        return Error{
+            id=err.id,
+            msg=fmt.tprintf("failed to read header: %s", err.msg),
+        }
+    }
+
+    tsv.header = head
+
+    log.debug("READ HEADER")
+    if ok, err := seek_reader(tsv.seeker_reader, i64(tsv.header.root_ei_pos)); !ok {
+        return Error{
+            id=ERROR_SEEK,
+            msg=fmt.tprintf("failed to seek: %s", err.msg),
+        }
+    }
+
+    events_block_header: EventsBlockHeader
+    events_block_header, err = read_events_block_header(tsv.seeker_reader)
+    if err.id != ERROR_NONE {
+        return Error{
+            id=err.id,
+            msg=fmt.tprintf("failed to read root events block header: %s", err.msg),
+        }
+    }
+
+    tsv.root_events_block_header = events_block_header
+
+    return Error{
+        id=ERROR_NONE,
+    }
 }
 
 // open :: proc(r: Reader) -> TimeSeriesVideo {
