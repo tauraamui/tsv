@@ -141,22 +141,25 @@ main :: proc() {
     context.logger = logger
     log.info("running TSV prototype")
 
-    new_tsvid := tsv.new()
-    log.debug("writing new db")
-    if ok := tsv.store(writer, new_tsvid); !ok {
-        log.panic("ERROR: unable to create new tsv DB")
-    }
+    tsvdb := tsv.new(reader, writer)
+    tsv.open(&tsvdb)
 
-    tsvid, ok := tsv.load(reader)
-    if !ok {
-        log.panic("ERROR: unable to load tsv DB")
-    }
+    // new_tsvid := tsv.new()
+    // log.debug("writing new db")
+    // if ok := tsv.store(writer, new_tsvid); !ok {
+    //     log.panic("ERROR: unable to create new tsv DB")
+    // }
 
-    log.infof("magic: %d", tsvid.header.magic)
+    // tsvid, ok := tsv.load(reader)
+    // if !ok {
+    //     log.panic("ERROR: unable to load tsv DB")
+    // }
 
-    tsvid.root_events_block_header.frame_size = 2000
-    tsvid.root_events_block_header.fps = 25
-    if ok := tsv.store(writer, tsvid); !ok {
-        log.panic("ERROR: unable to update tsv DB")
-    }
+    // log.infof("magic: %d", tsvid.header.magic)
+
+    // tsvid.root_events_block_header.frame_size = 2000
+    // tsvid.root_events_block_header.fps = 25
+    // if ok := tsv.store(writer, tsvid); !ok {
+    //     log.panic("ERROR: unable to update tsv DB")
+    // }
 }

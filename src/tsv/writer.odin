@@ -5,6 +5,7 @@ import "core:log"
 
 WriterFn :: proc(_: rawptr, _: []byte) -> (int, int)
 
+@(private)
 Writer :: struct {
 	seek_fn:        SeekFn,
 	writer_fn:      WriterFn,
@@ -20,6 +21,7 @@ make_writer :: proc(writer_fn: WriterFn, seek_fn: SeekFn, writer_context: rawptr
 	return writer
 }
 
+@(private)
 seek_writer :: proc(writer: Writer, offset: i64) -> (ok: bool) {
 	log.debug("seeking writer to", offset)
 
@@ -29,6 +31,7 @@ seek_writer :: proc(writer: Writer, offset: i64) -> (ok: bool) {
 	return
 }
 
+@(private)
 write_sized :: proc(writer: Writer, data: []byte) -> bool {
     written, err := writer.writer_fn(writer.writer_context, data)
 

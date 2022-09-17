@@ -1,5 +1,6 @@
 package tsv
 
+@(private)
 Header :: struct {
     magic:             uint32,
     root_ei_pos:       uint32,
