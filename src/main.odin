@@ -12,22 +12,9 @@ MODE_PERM :: 0o0777
 
 os_seek :: proc(handle: rawptr, offset: i64, whence: int) -> (i64, tsv.ExternalError) {
     ptr := cast(^os.Handle)handle
-    file_size, err := os.file_size(ptr^)
-    if err != os.ERROR_NONE {
-        return 0, tsv.ExternalError{
-            id=333,
-            msg="unable to stat file",
-        }
-    }
-    if file_size == 0 {
-        return 0, tsv.ExternalError{
-            id=334,
-            msg="unable to seek within empty file",
-        }
-    }
     a, b := os.seek(ptr^, offset, whence)
     return a, tsv.ExternalError{
-        id=cast(int)b,
+        id=cast(tsv.ErrID)b,
     }
 }
 
@@ -35,7 +22,7 @@ os_read :: proc(handle: rawptr, data: []byte) -> (int, tsv.ExternalError) {
     ptr := cast(^os.Handle)handle
     a, b := os.read(ptr^, data)
     err := tsv.ExternalError{
-        id=cast(int)b,
+        id=cast(tsv.ErrID)b,
     }
     return a, err
 }
@@ -44,7 +31,7 @@ os_write :: proc(handle: rawptr, data: []byte) -> (int, tsv.ExternalError) {
 	ptr := cast(^os.Handle)handle
 	a, b := os.write(ptr^, data)
     err := tsv.ExternalError{
-        id=cast(int)b,
+        id=cast(tsv.ErrID)b,
     }
 	return a, err
 }
@@ -158,6 +145,11 @@ main :: proc() {
     log.info("running TSV prototype")
 
     tsvdb := tsv.new(reader, writer)
+
+    if err := tsv.create(tsvdb); err.id != tsv.ERROR_NONE {
+        log.fatalf("failed to create/init tsv db: %s", err.msg)
+    }
+
     if err := tsv.open(&tsvdb); err.id != tsv.ERROR_NONE {
         log.fatalf("unable to open tsv db: %s", err.msg)
     }

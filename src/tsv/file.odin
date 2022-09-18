@@ -32,11 +32,45 @@ new :: proc(r: Reader, w: Writer) -> TimeSeriesVideo {
     }
 }
 
+create :: proc(tsv: TimeSeriesVideo) -> Error {
+    if ok, err := seek_writer(tsv.seeker_writer, 0); !ok {
+        return Error{
+            id=ERROR_SEEK,
+            msg=fmt.tprintf("failed to seek writer: %s", err.msg),
+        }
+    }
+
+    if ok, err := write_header(tsv.seeker_writer, tsv.header); !ok {
+        return Error{
+            id=ERROR_WRITE,
+            msg=fmt.tprintf("failed to write header: %s", err.msg),
+        }
+    }
+
+    if ok, err := seek_writer(tsv.seeker_writer, i64(tsv.header.root_ei_pos)); !ok {
+        return Error{
+            id=ERROR_SEEK,
+            msg=fmt.tprintf("failed to seek writer to pos %d: %s", tsv.header.root_ei_pos, err.msg),
+        }
+    }
+
+    if err := write_events_block_header(tsv.seeker_writer, tsv.root_events_block_header); err.id != ERROR_NONE {
+        return Error{
+            id=ERROR_WRITE,
+            msg=fmt.tprintf("failed to write root events block header: %s", err.msg),
+        }
+    }
+
+    return Error{
+        id=ERROR_NONE,
+    }
+}
+
 open :: proc(tsv: ^TimeSeriesVideo) -> Error {
     if ok, err := seek_reader(tsv.seeker_reader, 0); !ok {
         return Error{
             id=ERROR_SEEK,
-            msg=fmt.tprintf("failed to seek: %s", err.msg),
+            msg=fmt.tprintf("failed to seek reader: %s", err.msg),
         }
     }
 

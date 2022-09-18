@@ -3,7 +3,7 @@ package tsv
 import "core:log"
 
 ExternalError :: struct {
-	id:  int,
+	id:  ErrID,
 	msg: string,
 }
 
