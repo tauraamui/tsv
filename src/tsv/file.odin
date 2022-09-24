@@ -61,6 +61,13 @@ create :: proc(tsv: TimeSeriesVideo) -> Error {
         }
     }
 
+    if err := write_events_block_alloc(tsv.seeker_writer, tsv.root_events_block_header.size); err.id != ERROR_NONE {
+        return Error{
+            id=ERROR_WRITE,
+            msg=fmt.tprintf("unable to write root events block: %s", err.msg),
+        }
+    }
+
     return Error{
         id=ERROR_NONE,
     }

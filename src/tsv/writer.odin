@@ -2,6 +2,7 @@ package tsv
 
 import "core:sync"
 import "core:log"
+import "core:os"
 
 WriterFn :: proc(_: rawptr, _: []byte) -> (int, ExternalError)
 
@@ -22,9 +23,9 @@ make_writer :: proc(writer_fn: WriterFn, seek_fn: SeekFn, writer_context: rawptr
 }
 
 @(private)
-seek_writer :: proc(writer: Writer, offset: i64) -> (bool, ExternalError) {
+seek_writer :: proc(writer: Writer, offset: i64, whence := os.SEEK_CUR) -> (bool, ExternalError) {
 	log.debug("seeking writer to", offset)
-	_, err := writer.seek_fn(writer.writer_context, offset, 0)
+	_, err := writer.seek_fn(writer.writer_context, offset, whence)
 	if err.id == 0 {
 		return true, ExternalError{
 			id=ERROR_NONE,

@@ -154,6 +154,9 @@ main :: proc() {
         log.fatalf("unable to open tsv db: %s", err.msg)
     }
 
+    log.info(tsvdb.header.magic)
+    // log.infof("next event block pos: %d", tsv.calculate_next_event_block_pos(tsvdb))
+
     // new_tsvid := tsv.new()
     // log.debug("writing new db")
     // if ok := tsv.store(writer, new_tsvid); !ok {
