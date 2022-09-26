@@ -10,7 +10,7 @@ BTree :: ^BTNode
 BTNode :: struct {
     is_leaf: bool,
     num_keys: int,
-    keys: [MAX_KEYS+1]int,
+    keys: [MAX_KEYS]int,
     kids: [MAX_KEYS + 1]^BTNode,
 }
 
@@ -23,8 +23,12 @@ create :: proc() -> BTree {
 
 destroy :: proc(b: BTree) {
     if !b.is_leaf {
-        for i := 0; i < b.num_keys + 1; i+=1 {
-            destroy(b.kids[i])
+        for i := 0; i < len(b.kids); i +=1 {
+            if d := b.kids[i]; d != nil {
+                destroy(b.kids[i])
+            } else {
+                log.debug("found nil kid")
+            }
         }
     }
     free(b)
@@ -49,10 +53,14 @@ search :: proc(b: BTree, key: int) -> int {
 }
 
 insert :: proc(b: BTree, key: int) {
-    b2: BTree
-    median: int
+    output_log := false
+    // output_log := key >= 525817
+    if output_log {
+        log.debug("------------- BEGIN INSERTING -------------")
+    }
 
-    b2 = insert_key(b, key, &median)
+    median: int
+    b2 := insert_key(b, key, &median)
     if b2 != nil {
         /* basic issue here is that we are at the root */
         /* so if we split, we have to make a new root */
@@ -64,6 +72,9 @@ insert :: proc(b: BTree, key: int) {
         b.keys[0] = median
         b.kids[0] = b1
         b.kids[1] = b2
+    }
+    if output_log {
+        log.debug("------------- END INSERTING -------------")
     }
 }
 
@@ -98,13 +109,19 @@ search_key :: proc(n: int, a: []int, key: int) -> int {
 /* and puts the median in *median */
 /* else returns nil */
 insert_key :: proc(b: BTree, key: int, median: ^int) -> BTree {
-    log.debugf("KEY: %d", key)
+    output_log := false
+    // output_log := key >= 525817
+    if output_log {
+        log.debugf("inserting key %d into %s", key, b.is_leaf ? "LEAF" : "ROOT")
+    }
     median := median
     pos, mid: int
     b2: BTree
 
     pos = search_key(b.num_keys, b.keys[:], key)
-    log.debugf("FOUND POS: %d", pos)
+    if output_log {
+        log.debugf("found insertion position: %d", pos)
+    }
     if pos < b.num_keys && b.keys[pos] == key {
         return nil
     }
@@ -129,11 +146,16 @@ insert_key :: proc(b: BTree, key: int, median: ^int) -> BTree {
             b.kids[pos+1] = b2
             b.num_keys += 1
         }
+
+        return b2
     }
 
     /* we waste a tiny bit of space by splitting now
      * instead of on next insert */
     if b.num_keys >= MAX_KEYS {
+        if output_log {
+            log.debug("CARRYING OUT SPLIT")
+        }
         mid = b.num_keys/2
 
         median = &b.keys[mid]

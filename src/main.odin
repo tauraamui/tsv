@@ -158,16 +158,16 @@ main :: proc() {
 
     log.info(tsvdb.header.magic)
 
-    tree := btree.create()
-    for i := 0; i < 100; i += 1 {
-        assert(btree.search(tree, i) == 0)
-        btree.insert(tree, i)
-        assert(btree.search(tree, i) == 1)
-    }
-    btree.destroy(tree)
+    // tree := btree.create()
+    // for i := 0; i < 100; i += 1 {
+    //     assert(btree.search(tree, i) == 0)
+    //     btree.insert(tree, i)
+    //     assert(btree.search(tree, i) == 1)
+    // }
+    // btree.destroy(tree)
 
-    tree = btree.create()
-    for i := 0; i < 10000000; i += 1 {
+    tree := btree.create()
+    for i := 0; i < 1000000; i += 1 {
         assert(btree.search(tree, i) == 0)
         btree.insert(tree, i)
         assert(btree.search(tree, i+1) == 0)
