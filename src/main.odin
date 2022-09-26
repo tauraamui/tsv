@@ -4,8 +4,9 @@ import "core:fmt"
 import "core:os"
 import "core:sync"
 import "core:time"
-import "shared:tsv"
 import "core:log"
+import "shared:tsv"
+import "shared:btree"
 
 TEST_FILE_PATH :: "test.tdb"
 MODE_PERM :: 0o0777
@@ -141,6 +142,7 @@ main :: proc() {
     writer := tsv.make_writer(os_write, os_seek, cast(rawptr)&f)
 
     logger := log.create_console_logger(log.Level.Debug, Tsv_Logger_Opts)
+    defer log.destroy_console_logger(logger)
     context.logger = logger
     log.info("running TSV prototype")
 
@@ -155,6 +157,24 @@ main :: proc() {
     }
 
     log.info(tsvdb.header.magic)
+
+    tree := btree.create()
+    for i := 0; i < 100; i += 1 {
+        assert(btree.search(tree, i) == 0)
+        btree.insert(tree, i)
+        assert(btree.search(tree, i) == 1)
+    }
+    btree.destroy(tree)
+
+    tree = btree.create()
+    for i := 0; i < 10000000; i += 1 {
+        assert(btree.search(tree, i) == 0)
+        btree.insert(tree, i)
+        assert(btree.search(tree, i+1) == 0)
+        assert(btree.search(tree, i) == 1)
+    }
+    btree.destroy(tree)
+
     // log.infof("next event block pos: %d", tsv.calculate_next_event_block_pos(tsvdb))
 
     // new_tsvid := tsv.new()
