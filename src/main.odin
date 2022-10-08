@@ -6,7 +6,7 @@ import "core:sync"
 import "core:time"
 import "core:log"
 import "shared:tsv"
-import "shared:btree"
+import "shared:bintree"
 
 TEST_FILE_PATH :: "test.tdb"
 MODE_PERM :: 0o0777
@@ -158,6 +158,15 @@ main :: proc() {
 
     log.info(tsvdb.header.magic)
 
+    tree := bintree.create(80)
+    defer bintree.destroy(tree)
+    bintree.insert(tree, 30)
+    bintree.insert(tree, 1)
+    bintree.insert(tree, 8)
+    bintree.insert(tree, 333)
+    bintree.delete(tree, 8)
+    bintree.inorder(tree)
+
     // tree := btree.create()
     // for i := 0; i < 100; i += 1 {
     //     assert(btree.search(tree, i) == 0)
@@ -166,14 +175,8 @@ main :: proc() {
     // }
     // btree.destroy(tree)
 
-    tree := btree.create()
-    for i := 0; i < 1000000; i += 1 {
-        assert(btree.search(tree, i) == 0)
-        btree.insert(tree, i)
-        assert(btree.search(tree, i+1) == 0)
-        assert(btree.search(tree, i) == 1)
-    }
-    btree.destroy(tree)
+    // tree := btree.create()
+    // btree.destroy(tree)
 
     // log.infof("next event block pos: %d", tsv.calculate_next_event_block_pos(tsvdb))
 
