@@ -164,8 +164,10 @@ main :: proc() {
     bintree.insert(tree, 1)
     bintree.insert(tree, 8)
     bintree.insert(tree, 333)
-    bintree.delete(tree, 8)
+    bintree.delete(tree, 80)
     bintree.inorder(tree)
+
+    assert(bintree.search(tree, 8) != nil)
 
     // tree := btree.create()
     // for i := 0; i < 100; i += 1 {

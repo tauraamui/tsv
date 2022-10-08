@@ -15,6 +15,17 @@ create :: proc(item: int) -> BinTree {
     return node
 }
 
+search :: proc(b: BinTree, key: int) -> ^BinNode {
+    if b == nil || b.key == key {
+        return b
+    }
+
+    if b.key < key {
+        return search(b.right, key)
+    }
+    return search(b.left, key)
+}
+
 insert :: proc(b: BinTree, key: int) -> BinTree {
     if b == nil {
         return create(key)
@@ -57,11 +68,25 @@ delete :: proc(b: BinTree, key: int) -> BinTree {
             temp: ^BinNode = b.left
             free(b)
             return temp
-        }
+        } else {
+            succParent: BinTree = b
+            succ: ^BinNode = b.right
 
-        temp: ^BinNode = min_value_node(b.right)
-        b.key = temp.key
-        b.right = delete(b.right, temp.key)
+            for succ.left != nil {
+                succParent = succ
+                succ = succ.left
+            }
+
+            if succParent != b {
+                succParent.left = succ.right
+            } else {
+                succParent.right = succ.right
+            }
+
+            b.key = succ.key
+            free(succ)
+            return b
+        }
     }
 
     return b
