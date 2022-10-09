@@ -134,7 +134,7 @@ Tsv_Logger_Opts :: log.Options{
 }
 
 main :: proc() {
-    f, err := os.open(TEST_FILE_PATH, os.O_RDWR|os.O_CREATE, MODE_PERM)
+    f, err := os.open(TEST_FILE_PATH, os.O_RDWR|os.O_CREATE|os.O_TRUNC, MODE_PERM)
     if err != os.ERROR_NONE {
         fmt.printf("error: %d\n", err)
     }
@@ -148,10 +148,20 @@ main :: proc() {
     context.logger = logger
     log.info("running TSV prototype")
 
-    // tdb := db.create()
-    // if err := db.write(writer, tdb); err.id != tsv.ERROR_NONE {
-    //     log.fatalf("failed to write tsv db to writer: %s", err.msg)
-    // }
+    tdb := db.create()
+    if err := db.write(writer, tdb); err.id != tsv.ERROR_NONE {
+        log.fatalf("failed to write tsv db to writer: %s", err.msg)
+    }
+
+    fr := frame.create(3, 3)
+    defer frame.destroy(fr)
+    frame.paint_random(fr)
+
+    for i := 0; i < 10; i += 1 {
+        if err := db.put_frame(writer, &tdb, fr); err.id != tsv.ERROR_NONE {
+            log.fatalf("failed to write frame to tsv db: %s", err.msg)
+        }
+    }
 
     read_tdb := new(db.DB)
     defer free(read_tdb)
@@ -160,10 +170,8 @@ main :: proc() {
     }
 
     log.info(read_tdb.header.magic)
+    log.info(read_tdb.root_events_header.entries_count)
 
-    fr := frame.create(3, 3)
-    defer frame.destroy(fr)
-    frame.paint_random(fr)
 
     // tree := btree.create()
     // for i := 0; i < 100; i += 1 {
