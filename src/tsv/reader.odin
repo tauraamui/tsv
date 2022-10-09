@@ -10,7 +10,6 @@ ExternalError :: struct {
 SeekFn :: proc(_: rawptr, _: i64, _: int) -> (i64, ExternalError)
 ReaderFn :: proc(_: rawptr, _: []byte) -> (int, ExternalError)
 
-@(private)
 Reader :: struct {
 	seek_fn:        SeekFn,
 	reader_fn:      ReaderFn,
@@ -21,7 +20,6 @@ make_reader :: proc(reader_fn: ReaderFn, seek_fn: SeekFn, reader_context: rawptr
     return Reader{reader_context=reader_context, reader_fn=reader_fn, seek_fn=seek_fn}
 }
 
-@(private)
 seek_reader :: proc(reader: Reader, offset: i64) -> (bool, ExternalError) {
 	_, err := reader.seek_fn(reader.reader_context, offset, 0)
 	if err.id == 0 {
@@ -30,7 +28,6 @@ seek_reader :: proc(reader: Reader, offset: i64) -> (bool, ExternalError) {
 	return false, err
 }
 
-@(private)
 read_sized :: proc(reader: Reader, data: []u8) -> (bool, ExternalError) {
 	size := len(data)
 	n := 0

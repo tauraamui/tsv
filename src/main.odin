@@ -6,6 +6,8 @@ import "core:sync"
 import "core:time"
 import "core:log"
 import "shared:tsv"
+import "shared:tsv/frame"
+import "shared:tsv/db"
 import "shared:bintree"
 
 TEST_FILE_PATH :: "test.tdb"
@@ -132,7 +134,7 @@ Tsv_Logger_Opts :: log.Options{
 }
 
 main :: proc() {
-    f, err := os.open(TEST_FILE_PATH, os.O_RDWR|os.O_CREATE|os.O_TRUNC, MODE_PERM)
+    f, err := os.open(TEST_FILE_PATH, os.O_RDWR|os.O_CREATE, MODE_PERM)
     if err != os.ERROR_NONE {
         fmt.printf("error: %d\n", err)
     }
@@ -146,28 +148,22 @@ main :: proc() {
     context.logger = logger
     log.info("running TSV prototype")
 
-    tsvdb := tsv.new(reader, writer)
+    // tdb := db.create()
+    // if err := db.write(writer, tdb); err.id != tsv.ERROR_NONE {
+    //     log.fatalf("failed to write tsv db to writer: %s", err.msg)
+    // }
 
-    if err := tsv.create(tsvdb); err.id != tsv.ERROR_NONE {
-        log.fatalf("failed to create/init tsv db: %s", err.msg)
-    }
-
-    if err := tsv.open(&tsvdb); err.id != tsv.ERROR_NONE {
+    read_tdb := new(db.DB)
+    defer free(read_tdb)
+    if err := db.read(reader, read_tdb); err.id != tsv.ERROR_NONE {
         log.fatalf("unable to open tsv db: %s", err.msg)
     }
 
-    log.info(tsvdb.header.magic)
+    log.info(read_tdb.header.magic)
 
-    tree := bintree.create(80)
-    defer bintree.destroy(tree)
-    bintree.insert(tree, 30)
-    bintree.insert(tree, 1)
-    bintree.insert(tree, 8)
-    bintree.insert(tree, 333)
-    bintree.delete(tree, 80)
-    bintree.inorder(tree)
-
-    assert(bintree.search(tree, 8) != nil)
+    fr := frame.create(3, 3)
+    defer frame.destroy(fr)
+    frame.paint_random(fr)
 
     // tree := btree.create()
     // for i := 0; i < 100; i += 1 {

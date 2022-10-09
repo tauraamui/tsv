@@ -2,6 +2,7 @@ package tsv
 
 import "core:log"
 import "core:fmt"
+import "shared:typalias"
 
 @(private)
 MAGIC :: 0x132BB6C
@@ -14,7 +15,7 @@ TimeSeriesVideo :: struct {
     root_events_block_header: EventsBlockHeader,
 }
 
-new :: proc(r: Reader, w: Writer) -> TimeSeriesVideo {
+new_db :: proc(r: Reader, w: Writer) -> TimeSeriesVideo {
     return TimeSeriesVideo{
         seeker_reader=r,
         seeker_writer=w,

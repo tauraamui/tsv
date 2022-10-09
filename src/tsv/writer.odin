@@ -6,7 +6,6 @@ import "core:os"
 
 WriterFn :: proc(_: rawptr, _: []byte) -> (int, ExternalError)
 
-@(private)
 Writer :: struct {
 	seek_fn:        SeekFn,
 	writer_fn:      WriterFn,
@@ -22,7 +21,6 @@ make_writer :: proc(writer_fn: WriterFn, seek_fn: SeekFn, writer_context: rawptr
 	return writer
 }
 
-@(private)
 seek_writer :: proc(writer: Writer, offset: i64, whence := os.SEEK_CUR) -> (bool, ExternalError) {
 	log.debug("seeking writer to", offset)
 	_, err := writer.seek_fn(writer.writer_context, offset, whence)
@@ -34,7 +32,6 @@ seek_writer :: proc(writer: Writer, offset: i64, whence := os.SEEK_CUR) -> (bool
 	return false, err
 }
 
-@(private)
 write_sized :: proc(writer: Writer, data: []byte) -> (bool, ExternalError) {
     _, err := writer.writer_fn(writer.writer_context, data)
 	if err.id == 0 {
