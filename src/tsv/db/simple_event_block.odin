@@ -7,7 +7,6 @@ MAX_EVENT_SIZE :: 1024
 
 SimpleEventBlockHeader :: struct {
     id:             u32,
-    max_size:       u32,
     entries_count:  u32,
 }
 
@@ -16,7 +15,7 @@ EventBlockEntry :: struct {
 }
 
 read_events_header :: proc(reader: tsv.Reader) -> (SimpleEventBlockHeader, tsv.Error) {
-    dat := [12]uint8{}
+    dat := [8]uint8{}
     if ok, err := tsv.read_sized(reader, dat[:]); !ok {
         return SimpleEventBlockHeader{}, tsv.Error{
             id=tsv.ERROR_READ,
@@ -26,19 +25,17 @@ read_events_header :: proc(reader: tsv.Reader) -> (SimpleEventBlockHeader, tsv.E
 
     return SimpleEventBlockHeader{
         id=bytesToUint32(dat[:4]),
-        max_size=bytesToUint32(dat[4:8]),
-        entries_count=bytesToUint32(dat[8:12]),
+        entries_count=bytesToUint32(dat[4:8]),
     }, tsv.Error{
         id=tsv.ERROR_NONE,
     }
 }
 
 write_events_header :: proc(writer: tsv.Writer, evt: SimpleEventBlockHeader) -> tsv.Error {
-    dst := [12]uint8{}
+    dst := [8]uint8{}
 
     uint32ToBytes(evt.id, dst[:4])
-    uint32ToBytes(evt.max_size, dst[4:8])
-    uint32ToBytes(evt.entries_count, dst[8:12])
+    uint32ToBytes(evt.entries_count, dst[4:8])
 
 
     if ok, err := tsv.write_sized(writer, dst[:]); !ok {

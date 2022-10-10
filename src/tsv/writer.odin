@@ -21,7 +21,7 @@ make_writer :: proc(writer_fn: WriterFn, seek_fn: SeekFn, writer_context: rawptr
 	return writer
 }
 
-seek_writer :: proc(writer: Writer, offset: i64, whence := os.SEEK_CUR) -> (bool, ExternalError) {
+seek_writer :: proc(writer: Writer, offset: i64, whence := os.SEEK_SET) -> (bool, ExternalError) {
 	log.debug("seeking writer to", offset)
 	_, err := writer.seek_fn(writer.writer_context, offset, whence)
 	if err.id == 0 {

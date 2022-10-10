@@ -148,21 +148,25 @@ main :: proc() {
     context.logger = logger
     log.info("running TSV prototype")
 
-    tdb := db.create()
+    tdb := db.new_db()
     if err := db.write(writer, tdb); err.id != tsv.ERROR_NONE {
         log.fatalf("failed to write tsv db to writer: %s", err.msg)
     }
 
-    fr := frame.create(3, 3)
-    defer frame.destroy(fr)
-    frame.paint_random(fr)
+    output_tdb_header(reader)
 
-    for i := 0; i < 10; i += 1 {
-        if err := db.put_frame(writer, &tdb, fr); err.id != tsv.ERROR_NONE {
-            log.fatalf("failed to write frame to tsv db: %s", err.msg)
-        }
-    }
+    // fr := frame.create(3, 3)
+    // defer frame.destroy(fr)
+    // frame.paint_random(fr)
 
+    // for i := 0; i < 10; i += 1 {
+    //     if err := db.put_frame(writer, &tdb, fr); err.id != tsv.ERROR_NONE {
+    //         log.fatalf("failed to write frame to tsv db: %s", err.msg)
+    //     }
+    // }
+}
+
+output_tdb_header :: proc(reader: tsv.Reader) {
     read_tdb := new(db.DB)
     defer free(read_tdb)
     if err := db.read(reader, read_tdb); err.id != tsv.ERROR_NONE {
@@ -171,37 +175,4 @@ main :: proc() {
 
     log.info(read_tdb.header.magic)
     log.info(read_tdb.root_events_header.entries_count)
-
-
-    // tree := btree.create()
-    // for i := 0; i < 100; i += 1 {
-    //     assert(btree.search(tree, i) == 0)
-    //     btree.insert(tree, i)
-    //     assert(btree.search(tree, i) == 1)
-    // }
-    // btree.destroy(tree)
-
-    // tree := btree.create()
-    // btree.destroy(tree)
-
-    // log.infof("next event block pos: %d", tsv.calculate_next_event_block_pos(tsvdb))
-
-    // new_tsvid := tsv.new()
-    // log.debug("writing new db")
-    // if ok := tsv.store(writer, new_tsvid); !ok {
-    //     log.panic("ERROR: unable to create new tsv DB")
-    // }
-
-    // tsvid, ok := tsv.load(reader)
-    // if !ok {
-    //     log.panic("ERROR: unable to load tsv DB")
-    // }
-
-    // log.infof("magic: %d", tsvid.header.magic)
-
-    // tsvid.root_events_block_header.frame_size = 2000
-    // tsvid.root_events_block_header.fps = 25
-    // if ok := tsv.store(writer, tsvid); !ok {
-    //     log.panic("ERROR: unable to update tsv DB")
-    // }
 }

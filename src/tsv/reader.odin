@@ -1,6 +1,7 @@
 package tsv
 
 import "core:log"
+import "core:os"
 
 ExternalError :: struct {
 	id:  ErrID,
@@ -20,8 +21,8 @@ make_reader :: proc(reader_fn: ReaderFn, seek_fn: SeekFn, reader_context: rawptr
     return Reader{reader_context=reader_context, reader_fn=reader_fn, seek_fn=seek_fn}
 }
 
-seek_reader :: proc(reader: Reader, offset: i64) -> (bool, ExternalError) {
-	_, err := reader.seek_fn(reader.reader_context, offset, 0)
+seek_reader :: proc(reader: Reader, offset: i64, whence := os.SEEK_SET) -> (bool, ExternalError) {
+	_, err := reader.seek_fn(reader.reader_context, offset, whence)
 	if err.id == 0 {
 		return true, ExternalError{}
 	}

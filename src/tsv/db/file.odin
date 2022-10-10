@@ -13,7 +13,7 @@ DB :: struct {
     // root_events_block_header: EventsBlockHeader,
 }
 
-create :: proc() -> DB {
+new_db :: proc() -> DB {
     return DB{
         header=Header{
             magic=MAGIC,
@@ -21,7 +21,6 @@ create :: proc() -> DB {
         },
         root_events_header=SimpleEventBlockHeader{
             id=0,
-            max_size=MAX_EVENT_SIZE,
             entries_count=0,
         },
         // root_events_block_header=EventsBlockHeader{
@@ -99,7 +98,6 @@ put_frame :: proc(writer: tsv.Writer, tdb: ^DB, fr: frame.Frame) -> tsv.Error {
 
     updated_block_header := SimpleEventBlockHeader{
         id=tdb.root_events_header.id,
-        max_size=tdb.root_events_header.max_size,
         entries_count=new_id,
     }
 
