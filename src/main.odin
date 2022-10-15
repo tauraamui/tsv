@@ -155,15 +155,15 @@ main :: proc() {
 
     output_tdb_header(reader)
 
-    // fr := frame.create(3, 3)
-    // defer frame.destroy(fr)
-    // frame.paint_random(fr)
+    fr := frame.create(3, 3)
+    defer frame.destroy(fr)
+    frame.fill_random(fr)
 
-    // for i := 0; i < 10; i += 1 {
-    //     if err := db.put_frame(writer, &tdb, fr); err.id != tsv.ERROR_NONE {
-    //         log.fatalf("failed to write frame to tsv db: %s", err.msg)
-    //     }
-    // }
+    for i := 0; i < 10; i += 1 {
+        if err := db.put_frame(writer, &tdb, fr); err.id != tsv.ERROR_NONE {
+            log.fatalf("failed to write frame to tsv db: %s", err.msg)
+        }
+    }
 }
 
 output_tdb_header :: proc(reader: tsv.Reader) {
