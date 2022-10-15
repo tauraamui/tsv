@@ -26,7 +26,18 @@ create :: proc(w, h: int) -> Frame {
     }
 }
 
-paint_random :: proc(f: Frame) {
+alloc_bytes :: proc(f: Frame) -> []byte {
+    b := make([]byte, (f.width * f.height) * 3)
+    for pix, i in f.data {
+        b[i]   = pix.R
+        b[i+1] = pix.G
+        b[i+2] = pix.B
+    }
+    return b
+}
+
+fill_random :: proc(f: Frame, seed: u64 = 30) {
+    rand.set_global_seed(seed)
     for y := 0; y < f.height; y += 1 {
         for x := 0; x < f.width; x += 1 {
             pos := (y * f.width) + x
