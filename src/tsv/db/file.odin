@@ -117,6 +117,8 @@ put_frame :: proc(writer: tsv.Writer, tdb: ^DB, fr: frame.Frame) -> tsv.Error {
 
     tdb.root_events_header = updated_block_header
 
+    // jump to end of event block, apply current count as offset and write frame data
+
     return tsv.Error{
         id=tsv.ERROR_NONE,
     }
