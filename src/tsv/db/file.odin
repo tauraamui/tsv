@@ -67,21 +67,33 @@ write :: proc(writer: tsv.Writer, tdb: DB) -> tsv.Error {
     }
 }
 
+@private
+event_block_start :: proc(tdb: ^DB) -> uint32 {
+    return tdb.header.root_ei_pos + size_of(tdb.root_events_header)
+}
+
+@private
+calc_existing_size :: proc(tdb: ^DB) -> uint32 {
+    return tdb.root_events_header.entries_count * size_of(EventBlockEntry)
+}
+
+@private
+within_event_block_bounds :: proc(tdb: ^DB) -> bool {
+    return !(calc_existing_size(tdb) + size_of(EventBlockEntry) > MAX_EVENT_SIZE)
+}
+
 put_frame :: proc(writer: tsv.Writer, tdb: ^DB, fr: frame.Frame) -> tsv.Error {
-    c_id := tdb.root_events_header.entries_count
-    new_id: uint32 = c_id + 1
-
-    event_block_start := (tdb.header.root_ei_pos + size_of(tdb.root_events_header))
-    existing_size := (c_id * size_of(EventBlockEntry))
-
-    if existing_size + size_of(EventBlockEntry) > MAX_EVENT_SIZE {
+    if !within_event_block_bounds(tdb) {
         return tsv.Error{
             id=tsv.ERROR_WRITE,
             msg=fmt.tprintf("event block max size will be supassed by new entry write"),
         }
     }
 
-    write_loc := event_block_start + existing_size
+    c_id := tdb.root_events_header.entries_count
+    new_id: uint32 = c_id + 1
+
+    write_loc := event_block_start(tdb) + calc_existing_size(tdb)
     if ok, err := tsv.seek_writer(writer, i64(write_loc)); !ok {
         return tsv.Error{
             id=tsv.ERROR_SEEK,
