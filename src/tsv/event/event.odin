@@ -1,8 +1,13 @@
-package db
+package event
 
 import "core:fmt"
 import "shared:bytes"
 import "shared:tsv"
+import "shared:typalias"
+
+uint8 :: typalias.uint8
+uint16  :: typalias.uint16
+uint32  :: typalias.uint32
 
 MAX_EVENT_SIZE :: 1024
 

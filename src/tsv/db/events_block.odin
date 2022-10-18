@@ -1,6 +1,7 @@
 package db
 
 import "core:fmt"
+import "shared:bytes"
 import "core:os"
 import "core:time"
 import "shared:tsv"
@@ -25,12 +26,12 @@ read_events_block_header :: proc(r: tsv.Reader) -> (EventsBlockHeader, tsv.Error
     }
 
     return EventsBlockHeader{
-        id=bytesToUint32(dat[:4]),
-        max_cap=bytesToUint32(dat[4:8]),
-        size=bytesToUint32(dat[8:12]),
-        duration=bytesToUint32(dat[12:16]),
-        fps=bytesToUint32(dat[16:20]),
-        frame_size=bytesToUint32(dat[20:24]),
+        id=bytes.toUint32(dat[:4]),
+        max_cap=bytes.toUint32(dat[4:8]),
+        size=bytes.toUint32(dat[8:12]),
+        duration=bytes.toUint32(dat[12:16]),
+        fps=bytes.toUint32(dat[16:20]),
+        frame_size=bytes.toUint32(dat[20:24]),
     }, tsv.Error{
         id=tsv.ERROR_NONE,
     }
@@ -40,12 +41,12 @@ read_events_block_header :: proc(r: tsv.Reader) -> (EventsBlockHeader, tsv.Error
 write_events_block_header :: proc(writer: tsv.Writer, head: EventsBlockHeader) -> tsv.Error {
     dst := [24]uint8{}
 
-    uint32ToBytes(head.id, dst[:4])
-    uint32ToBytes(head.max_cap, dst[4:8])
-    uint32ToBytes(head.size, dst[8:12])
-    uint32ToBytes(head.duration, dst[12:16])
-    uint32ToBytes(head.fps, dst[16:20])
-    uint32ToBytes(head.frame_size, dst[20:24])
+    bytes.uint32ToA(head.id, dst[:4])
+    bytes.uint32ToA(head.max_cap, dst[4:8])
+    bytes.uint32ToA(head.size, dst[8:12])
+    bytes.uint32ToA(head.duration, dst[12:16])
+    bytes.uint32ToA(head.fps, dst[16:20])
+    bytes.uint32ToA(head.frame_size, dst[20:24])
 
     if ok, err := tsv.write_sized(writer, dst[:]); !ok {
         return tsv.Error{
