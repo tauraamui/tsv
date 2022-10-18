@@ -33,29 +33,18 @@ new_db :: proc() -> DB {
     }
 }
 
-write :: proc(writer: tsv.Writer, tdb: DB) -> tsv.Error {
-    if ok, err := tsv.seek_writer(writer, 0); !ok {
-        return tsv.Error{
-            id=tsv.ERROR_SEEK,
-            msg=fmt.tprintf("failed to seek writer: %s", err.msg),
-        }
-    }
+@private
+ROOT_HEADER_POS :: 0
 
-    if ok, err := write_header(writer, tdb.header); !ok {
+write :: proc(writer: tsv.Writer, tdb: DB) -> tsv.Error {
+    if ok, err := write_header(writer, tdb.header, ROOT_HEADER_POS); !ok {
         return tsv.Error{
             id=tsv.ERROR_WRITE,
             msg=fmt.tprintf("failed to write header: %s", err.msg),
         }
     }
 
-    if ok, err := tsv.seek_writer(writer, i64(tdb.header.root_ei_pos)); !ok {
-        return tsv.Error{
-            id=tsv.ERROR_SEEK,
-            msg=fmt.tprintf("failed to seek writer to pos %d: %s", tdb.header.root_ei_pos, err.msg),
-        }
-    }
-
-    if err := write_events_header(writer, tdb.root_events_header); err.id != tsv.ERROR_NONE {
+    if err := write_events_header(writer, tdb.root_events_header, i64(tdb.header.root_ei_pos)); err.id != tsv.ERROR_NONE {
         return tsv.Error{
             id=tsv.ERROR_WRITE,
             msg=fmt.tprintf("failed to write root events block header: %s", err.msg),
@@ -83,6 +72,8 @@ within_event_block_bounds :: proc(tdb: ^DB) -> bool {
 }
 
 put_frame :: proc(writer: tsv.Writer, tdb: ^DB, fr: frame.Frame) -> tsv.Error {
+    // PENDING RE-WRITE OF INSERTIONS
+    /*
     if !within_event_block_bounds(tdb) {
         return tsv.Error{
             id=tsv.ERROR_WRITE,
@@ -131,6 +122,7 @@ put_frame :: proc(writer: tsv.Writer, tdb: ^DB, fr: frame.Frame) -> tsv.Error {
 
     // jump to end of event block, apply current count as offset and write frame data
 
+    */
     return tsv.Error{
         id=tsv.ERROR_NONE,
     }

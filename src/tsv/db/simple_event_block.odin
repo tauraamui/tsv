@@ -31,7 +31,14 @@ read_events_header :: proc(reader: tsv.Reader) -> (SimpleEventBlockHeader, tsv.E
     }
 }
 
-write_events_header :: proc(writer: tsv.Writer, evt: SimpleEventBlockHeader) -> tsv.Error {
+write_events_header :: proc(writer: tsv.Writer, evt: SimpleEventBlockHeader, at_pos: i64) -> tsv.Error {
+    if ok, err := tsv.seek_writer(writer, at_pos); !ok {
+        return tsv.Error{
+            id=tsv.ERROR_SEEK,
+            msg=fmt.tprintf("failed to seek writer to pos %d: %s", at_pos, err.msg),
+        }
+    }
+
     dst := [8]uint8{}
 
     uint32ToBytes(evt.id, dst[:4])

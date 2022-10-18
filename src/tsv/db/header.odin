@@ -29,7 +29,14 @@ read_header :: proc(reader: tsv.Reader) -> (Header, tsv.Error) {
 }
 
 @(private)
-write_header :: proc(writer: tsv.Writer, head: Header) -> (bool, tsv.Error) {
+write_header :: proc(writer: tsv.Writer, head: Header, at_pos: i64 = 0) -> (bool, tsv.Error) {
+    if ok, err := tsv.seek_writer(writer, at_pos); !ok {
+        return false, tsv.Error{
+            id=tsv.ERROR_SEEK,
+            msg=fmt.tprintf("failed to seek writer to pos %d: %s", ROOT_HEADER_POS, err.msg),
+        }
+    }
+
     dst := [8]uint8{}
 
     uint32ToBytes(head.magic, dst[:4])
