@@ -20,7 +20,7 @@ EventBlockEntry :: struct {
     frame_id: u32,
 }
 
-read_events_header :: proc(reader: tsv.Reader) -> (SimpleEventBlockHeader, tsv.Error) {
+read_header :: proc(reader: tsv.Reader) -> (SimpleEventBlockHeader, tsv.Error) {
     dat := [8]uint8{}
     if ok, err := tsv.read_sized(reader, dat[:]); !ok {
         return SimpleEventBlockHeader{}, tsv.Error{
@@ -37,7 +37,7 @@ read_events_header :: proc(reader: tsv.Reader) -> (SimpleEventBlockHeader, tsv.E
     }
 }
 
-write_events_header :: proc(writer: tsv.Writer, evt: SimpleEventBlockHeader, at_pos: i64) -> tsv.Error {
+write_header :: proc(writer: tsv.Writer, evt: SimpleEventBlockHeader, at_pos: i64) -> tsv.Error {
     if ok, err := tsv.seek_writer(writer, at_pos); !ok {
         return tsv.Error{
             id=tsv.ERROR_SEEK,
@@ -63,7 +63,7 @@ write_events_header :: proc(writer: tsv.Writer, evt: SimpleEventBlockHeader, at_
     }
 }
 
-write_events_entry :: proc(writer: tsv.Writer, evt: EventBlockEntry) -> tsv.Error {
+write_entry :: proc(writer: tsv.Writer, evt: EventBlockEntry) -> tsv.Error {
     dst := [4]uint8{}
 
     bytes.uint32ToA(evt.frame_id, dst[:4])
