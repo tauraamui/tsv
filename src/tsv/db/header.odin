@@ -4,6 +4,7 @@ import "core:fmt"
 import "shared:bytes"
 import "shared:tsv"
 import "shared:typalias"
+import "shared:tsv/error"
 
 @(private)
 Header :: struct {
@@ -12,11 +13,11 @@ Header :: struct {
 }
 
 @(private)
-read_header :: proc(reader: tsv.Reader) -> (Header, tsv.Error) {
+read_header :: proc(reader: tsv.Reader) -> (Header, error.Error) {
     data_to_read := [8]uint8{}
     if ok, err := tsv.read_sized(reader, data_to_read[:]); !ok {
-        return Header{}, tsv.Error{
-            id=tsv.ERROR_READ,
+        return Header{}, error.Error{
+            id=error.READ,
             msg=fmt.tprintf("failed to read: %s", err.msg),
         }
     }
@@ -24,16 +25,16 @@ read_header :: proc(reader: tsv.Reader) -> (Header, tsv.Error) {
     return Header{
         magic=bytes.toUint32(data_to_read[:4]),
         root_ei_pos=bytes.toUint32(data_to_read[4:8]),
-    }, tsv.Error{
-        id=tsv.ERROR_NONE,
+    }, error.Error{
+        id=error.NONE,
     } 
 }
 
 @(private)
-write_header :: proc(writer: tsv.Writer, head: Header, at_pos: i64 = 0) -> (bool, tsv.Error) {
+write_header :: proc(writer: tsv.Writer, head: Header, at_pos: i64 = 0) -> (bool, error.Error) {
     if ok, err := tsv.seek_writer(writer, at_pos); !ok {
-        return false, tsv.Error{
-            id=tsv.ERROR_SEEK,
+        return false, error.Error{
+            id=error.SEEK,
             msg=fmt.tprintf("failed to seek writer to pos %d: %s", ROOT_HEADER_POS, err.msg),
         }
     }
@@ -44,14 +45,14 @@ write_header :: proc(writer: tsv.Writer, head: Header, at_pos: i64 = 0) -> (bool
     bytes.uint32ToA(head.root_ei_pos, dst[4:8])
 
     if ok, err := tsv.write_sized(writer, dst[:]); !ok {
-        return false, tsv.Error{
-            id=tsv.ERROR_WRITE,
+        return false, error.Error{
+            id=error.WRITE,
             msg=fmt.tprintf("failed to write: %s", err.msg),
         }
     }
 
-    return true, tsv.Error{
-        id=tsv.ERROR_NONE,
+    return true, error.Error{
+        id=error.NONE,
     }
 }
 

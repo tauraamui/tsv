@@ -5,6 +5,7 @@ import "shared:bytes"
 import "core:os"
 import "core:time"
 import "shared:tsv"
+import "shared:tsv/error"
 
 EventsBlockHeader :: struct {
     id:         uint32,
@@ -16,11 +17,11 @@ EventsBlockHeader :: struct {
 }
 
 @(private)
-read_events_block_header :: proc(r: tsv.Reader) -> (EventsBlockHeader, tsv.Error) {
+read_events_block_header :: proc(r: tsv.Reader) -> (EventsBlockHeader, error.Error) {
     dat := [24]uint8{}
     if ok, err := tsv.read_sized(r, dat[:]); !ok {
-        return EventsBlockHeader{}, tsv.Error{
-            id=tsv.ERROR_READ,
+        return EventsBlockHeader{}, error.Error{
+            id=error.READ,
             msg=fmt.tprintf("failed to read: %s", err.msg),
         }
     }
@@ -32,13 +33,13 @@ read_events_block_header :: proc(r: tsv.Reader) -> (EventsBlockHeader, tsv.Error
         duration=bytes.toUint32(dat[12:16]),
         fps=bytes.toUint32(dat[16:20]),
         frame_size=bytes.toUint32(dat[20:24]),
-    }, tsv.Error{
-        id=tsv.ERROR_NONE,
+    }, error.Error{
+        id=error.NONE,
     }
 }
 
 @(private)
-write_events_block_header :: proc(writer: tsv.Writer, head: EventsBlockHeader) -> tsv.Error {
+write_events_block_header :: proc(writer: tsv.Writer, head: EventsBlockHeader) -> error.Error {
     dst := [24]uint8{}
 
     bytes.uint32ToA(head.id, dst[:4])
@@ -49,28 +50,28 @@ write_events_block_header :: proc(writer: tsv.Writer, head: EventsBlockHeader) -
     bytes.uint32ToA(head.frame_size, dst[20:24])
 
     if ok, err := tsv.write_sized(writer, dst[:]); !ok {
-        return tsv.Error{
-            id=tsv.ERROR_WRITE,
+        return error.Error{
+            id=error.WRITE,
             msg=fmt.tprintf("failed to write events block header: %s", err.msg),
         }
     }
 
-    return tsv.Error{
-        id=tsv.ERROR_NONE,
+    return error.Error{
+        id=error.NONE,
     }
 }
 
-@(private) write_events_block_alloc :: proc(writer: tsv.Writer, size: uint32) -> tsv.Error {
+@(private) write_events_block_alloc :: proc(writer: tsv.Writer, size: uint32) -> error.Error {
     if ok, err := tsv.seek_writer(writer, i64(size), os.SEEK_END); !ok {
-        return tsv.Error{
-            id=tsv.ERROR_SEEK,
+        return error.Error{
+            id=error.SEEK,
             msg=fmt.tprintf("failed to seek to end of file: %s", err.msg),
         }
     }
 
     if size % 1024 > 0 {
-        return tsv.Error{
-            id=tsv.ERROR_WRITE,
+        return error.Error{
+            id=error.WRITE,
             msg=fmt.tprintf("size (%d) must be multiple of 1024", size),
         }
     }
@@ -84,14 +85,14 @@ write_events_block_header :: proc(writer: tsv.Writer, head: EventsBlockHeader) -
             time.sleep(time.Microsecond)
         }
         if ok, err := tsv.write_sized(writer, b); !ok {
-            return tsv.Error{
-                id=tsv.ERROR_WRITE,
+            return error.Error{
+                id=error.WRITE,
                 msg=fmt.tprintf("failed to write event block allocation: %s", err.msg),
             }
         }
     }
 
-    return tsv.Error{
-        id=tsv.ERROR_NONE,
+    return error.Error{
+        id=error.NONE,
     }
 }

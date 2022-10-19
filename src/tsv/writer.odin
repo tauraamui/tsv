@@ -3,6 +3,7 @@ package tsv
 import "core:sync"
 import "core:log"
 import "core:os"
+import "shared:tsv/error"
 
 WriterFn :: proc(_: rawptr, _: []byte) -> (int, ExternalError)
 
@@ -26,7 +27,7 @@ seek_writer :: proc(writer: Writer, offset: i64, whence := os.SEEK_SET) -> (bool
 	_, err := writer.seek_fn(writer.writer_context, offset, whence)
 	if err.id == 0 {
 		return true, ExternalError{
-			id=ERROR_NONE,
+			id=error.NONE,
 		}
 	}
 	return false, err
@@ -36,7 +37,7 @@ write_sized :: proc(writer: Writer, data: []byte) -> (bool, ExternalError) {
     _, err := writer.writer_fn(writer.writer_context, data)
 	if err.id == 0 {
 		return true, ExternalError{
-			id=ERROR_NONE,
+			id=error.NONE,
 		}
 	}
     return false, err

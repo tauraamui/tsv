@@ -8,6 +8,7 @@ import "core:log"
 import "shared:tsv"
 import "shared:tsv/frame"
 import "shared:tsv/db"
+import "shared:tsv/error"
 import "shared:bintree"
 
 TEST_FILE_PATH :: "test.tdb"
@@ -17,7 +18,7 @@ os_seek :: proc(handle: rawptr, offset: i64, whence: int) -> (i64, tsv.ExternalE
     ptr := cast(^os.Handle)handle
     a, b := os.seek(ptr^, offset, whence)
     return a, tsv.ExternalError{
-        id=cast(tsv.ErrID)b,
+        id=cast(error.ID)b,
     }
 }
 
@@ -25,7 +26,7 @@ os_read :: proc(handle: rawptr, data: []byte) -> (int, tsv.ExternalError) {
     ptr := cast(^os.Handle)handle
     a, b := os.read(ptr^, data)
     err := tsv.ExternalError{
-        id=cast(tsv.ErrID)b,
+        id=cast(error.ID)b,
     }
     return a, err
 }
@@ -34,7 +35,7 @@ os_write :: proc(handle: rawptr, data: []byte) -> (int, tsv.ExternalError) {
 	ptr := cast(^os.Handle)handle
 	a, b := os.write(ptr^, data)
     err := tsv.ExternalError{
-        id=cast(tsv.ErrID)b,
+        id=cast(error.ID)b,
     }
 	return a, err
 }
@@ -72,7 +73,7 @@ main :: proc() {
     log.info("running TSV prototype")
 
     tdb := db.new_db()
-    if err := db.write(writer, tdb); err.id != tsv.ERROR_NONE {
+    if err := db.write(writer, tdb); err.id != error.NONE {
         log.fatalf("failed to write tsv db to writer: %s", err.msg)
     }
 
@@ -83,7 +84,7 @@ main :: proc() {
     frame.fill_random(fr)
 
     for i := 0; i < 10; i += 1 {
-        if err := db.put_frame(writer, &tdb, fr); err.id != tsv.ERROR_NONE {
+        if err := db.put_frame(writer, &tdb, fr); err.id != error.NONE {
             log.fatalf("failed to write frame to tsv db: %s", err.msg)
         }
     }
@@ -92,7 +93,7 @@ main :: proc() {
 output_tdb_header :: proc(reader: tsv.Reader) {
     read_tdb := new(db.DB)
     defer free(read_tdb)
-    if err := db.read(reader, read_tdb); err.id != tsv.ERROR_NONE {
+    if err := db.read(reader, read_tdb); err.id != error.NONE {
         log.fatalf("unable to open tsv db: %s", err.msg)
     }
 

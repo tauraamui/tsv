@@ -2,9 +2,10 @@ package tsv
 
 import "core:log"
 import "core:os"
+import "shared:tsv/error"
 
 ExternalError :: struct {
-	id:  ErrID,
+	id:  error.ID,
 	msg: string,
 }
 
