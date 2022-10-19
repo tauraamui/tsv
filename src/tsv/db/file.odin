@@ -73,7 +73,17 @@ within_event_block_bounds :: proc(tdb: ^DB) -> bool {
     return !(calc_existing_size(tdb) + size_of(event.EventBlockEntry) > event.MAX_EVENT_SIZE)
 }
 
-put_frame :: proc(writer: tsv.Writer, tdb: ^DB, fr: frame.Frame) -> error.Error {
+/* This proc needs to do a bunch of tasks, one by one probably
+    1. Store event data entry in current event block
+        - This will require to track some kind of cursor for a specific event block
+    2. Store frame content into current video block
+        - The location for the inserts to start from for an event block will always
+          be relative to the known max size of the current event block, but as the event
+          block is being populated, the actual space it takes up will not extend to its max size
+        - Therefore for the first video data insertion the seek will have to occur from the
+          start of the current event block + event block's max size
+*/
+save_frame :: proc(writer: tsv.Writer, tdb: ^DB, fr: frame.Frame) -> error.Error {
     // PENDING RE-WRITE OF INSERTIONS
     /*
     if !within_event_block_bounds(tdb) {

@@ -84,7 +84,7 @@ main :: proc() {
     frame.fill_random(fr)
 
     for i := 0; i < 10; i += 1 {
-        if err := db.put_frame(writer, &tdb, fr); err.id != error.NONE {
+        if err := db.save_frame(writer, &tdb, fr); err.id != error.NONE {
             log.fatalf("failed to write frame to tsv db: %s", err.msg)
         }
     }
