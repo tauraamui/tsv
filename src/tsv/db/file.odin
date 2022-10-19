@@ -3,13 +3,14 @@ package db
 import "core:fmt"
 import "shared:tsv"
 import "shared:tsv/frame"
+import "shared:tsv/event"
 
 @(private)
 MAGIC :: 0x132BB6C
 
 DB :: struct {
     header:                   Header,
-    root_events_header:       SimpleEventBlockHeader,
+    root_events_header:       event.SimpleEventBlockHeader,
     // root_events_block_header: EventsBlockHeader,
 }
 
@@ -19,7 +20,7 @@ new_db :: proc() -> DB {
             magic=MAGIC,
             root_ei_pos=size_of(Header{}),
         },
-        root_events_header=SimpleEventBlockHeader{
+        root_events_header=event.SimpleEventBlockHeader{
             id=0,
             entries_count=0,
         },
@@ -44,7 +45,7 @@ write :: proc(writer: tsv.Writer, tdb: DB) -> tsv.Error {
         }
     }
 
-    if err := write_events_header(writer, tdb.root_events_header, i64(tdb.header.root_ei_pos)); err.id != tsv.ERROR_NONE {
+    if err := event.write_header(writer, tdb.root_events_header, i64(tdb.header.root_ei_pos)); err.id != tsv.ERROR_NONE {
         return tsv.Error{
             id=tsv.ERROR_WRITE,
             msg=fmt.tprintf("failed to write root events block header: %s", err.msg),
@@ -63,12 +64,12 @@ event_block_start :: proc(tdb: ^DB) -> uint32 {
 
 @private
 calc_existing_size :: proc(tdb: ^DB) -> uint32 {
-    return tdb.root_events_header.entries_count * size_of(EventBlockEntry)
+    return tdb.root_events_header.entries_count * size_of(event.EventBlockEntry)
 }
 
 @private
 within_event_block_bounds :: proc(tdb: ^DB) -> bool {
-    return !(calc_existing_size(tdb) + size_of(EventBlockEntry) > MAX_EVENT_SIZE)
+    return !(calc_existing_size(tdb) + size_of(event.EventBlockEntry) > event.MAX_EVENT_SIZE)
 }
 
 put_frame :: proc(writer: tsv.Writer, tdb: ^DB, fr: frame.Frame) -> tsv.Error {
@@ -153,8 +154,8 @@ read :: proc(reader: tsv.Reader, dst: ^DB) -> tsv.Error {
         }
     }
 
-    events_block_header: SimpleEventBlockHeader
-    events_block_header, err = read_events_header(reader)
+    events_block_header: event.SimpleEventBlockHeader
+    events_block_header, err = event.read_header(reader)
     if err.id != tsv.ERROR_NONE {
         return tsv.Error{
             id=err.id,
