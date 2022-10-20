@@ -17,8 +17,8 @@ read_header :: proc(reader: tsv.Reader) -> (Header, error.Error) {
     data_to_read := [8]uint8{}
     if ok, err := tsv.read_sized(reader, data_to_read[:]); !ok {
         return Header{}, error.Error{
-            id=error.READ,
-            msg=fmt.tprintf("failed to read: %s", err.msg),
+            id=err.id,
+            msg=err.msg,
         }
     }
 
@@ -35,7 +35,7 @@ write_header :: proc(writer: tsv.Writer, head: Header, at_pos: i64 = 0) -> (bool
     if ok, err := tsv.seek_writer(writer, at_pos); !ok {
         return false, error.Error{
             id=error.SEEK,
-            msg=fmt.tprintf("failed to seek writer to pos %d: %s", ROOT_HEADER_POS, err.msg),
+            msg=fmt.tprintf("failed to seek writer to pos %d: %s", at_pos, err.msg),
         }
     }
 

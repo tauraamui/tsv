@@ -7,7 +7,10 @@ Error :: struct {
 
 ID :: distinct i32
 
-NONE:  ID: 0
-SEEK:  ID: 1
-READ:  ID: 2
-WRITE: ID: 3
+NONE:           ID: 0
+SEEK:           ID: 1
+READ:           ID: 2
+WRITE:          ID: 3
+
+UNKNOWN_HEADER: ID: 4
+READING_EMPTY:  ID: 5

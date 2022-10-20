@@ -9,29 +9,56 @@ import "shared:tsv/error"
 @(private)
 MAGIC :: 0x132BB6C
 
+Connection :: ^DB
+
 DB :: struct {
+    writer: tsv.Writer,
+    reader: tsv.Reader,
     header:                   Header,
     root_events_header:       event.SimpleEventBlockHeader,
     // root_events_block_header: EventsBlockHeader,
 }
 
-new_db :: proc() -> DB {
-    return DB{
-        header=Header{
-            magic=MAGIC,
-            root_ei_pos=size_of(Header{}),
-        },
-        root_events_header=event.SimpleEventBlockHeader{
-            id=0,
-            entries_count=0,
-        },
-        // root_events_block_header=EventsBlockHeader{
-        //     id=1,
-        //     size=1024,
-        //     duration=0,
-        //     fps=0,
-        //     frame_size=0,
-        // },
+new_db :: proc(writer: tsv.Writer, reader: tsv.Reader) -> (Connection, error.Error) {
+    db := DB{
+        writer=writer,
+        reader=reader,
+    }
+
+    h, err := resolve_header(&db)
+    if err.id != error.NONE {
+        return nil, err
+    }
+
+    db.header = h
+
+    return &db, error.Error{
+        id=error.NONE,
+    }
+}
+
+@private
+resolve_header :: proc(tdb: Connection) -> (Header, error.Error) {
+    existing_header, err := read_header(tdb.reader)
+
+    if err.id != error.NONE && err.id != error.READING_EMPTY {
+        return Header{}, err
+    }
+
+    if err.id == error.READING_EMPTY {
+        h := Header{magic=MAGIC}
+        h.root_ei_pos = size_of(h)
+        if ok, err := write_header(tdb.writer, h, ROOT_HEADER_POS); !ok {
+            return Header{}, err
+        }
+        return h, error.Error{id=error.NONE}
+    }
+
+    if existing_header.magic == MAGIC { return existing_header, error.Error{id=error.NONE} }
+
+    return Header{}, error.Error{
+        id=error.UNKNOWN_HEADER,
+        msg=fmt.tprintf("unknown magic value: %v", existing_header.magic),
     }
 }
 
@@ -46,12 +73,12 @@ write :: proc(writer: tsv.Writer, tdb: DB) -> error.Error {
         }
     }
 
-    if err := event.write_header(writer, tdb.root_events_header, i64(tdb.header.root_ei_pos)); err.id != error.NONE {
-        return error.Error{
-            id=error.WRITE,
-            msg=fmt.tprintf("failed to write root events block header: %s", err.msg),
-        }
-    }
+    // if err := event.write_header(writer, tdb.root_events_header, i64(tdb.header.root_ei_pos)); err.id != error.NONE {
+    //     return error.Error{
+    //         id=error.WRITE,
+    //         msg=fmt.tprintf("failed to write root events block header: %s", err.msg),
+    //     }
+    // }
 
     return error.Error{
         id=error.NONE,
@@ -83,7 +110,7 @@ within_event_block_bounds :: proc(tdb: ^DB) -> bool {
         - Therefore for the first video data insertion the seek will have to occur from the
           start of the current event block + event block's max size
 */
-save_frame :: proc(writer: tsv.Writer, tdb: ^DB, fr: frame.Frame) -> error.Error {
+save_frame :: proc(tdb: ^DB, fr: frame.Frame) -> error.Error {
     // PENDING RE-WRITE OF INSERTIONS
     /*
     if !within_event_block_bounds(tdb) {

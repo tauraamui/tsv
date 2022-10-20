@@ -58,9 +58,9 @@ Tsv_Logger_Opts :: log.Options{
 }
 
 main :: proc() {
-    f, err := os.open(TEST_FILE_PATH, os.O_RDWR|os.O_CREATE|os.O_TRUNC, MODE_PERM)
-    if err != os.ERROR_NONE {
-        fmt.printf("error: %d\n", err)
+    f, os_err := os.open(TEST_FILE_PATH, os.O_RDWR|os.O_CREATE|os.O_TRUNC, MODE_PERM)
+    if os_err != os.ERROR_NONE {
+        fmt.printf("error: %d\n", os_err)
     }
     defer os.close(f)
 
@@ -72,19 +72,22 @@ main :: proc() {
     context.logger = logger
     log.info("running TSV prototype")
 
-    tdb := db.new_db()
-    if err := db.write(writer, tdb); err.id != error.NONE {
-        log.fatalf("failed to write tsv db to writer: %s", err.msg)
+    tdb, err := db.new_db(writer, reader)
+    if err.id != error.NONE {
+        log.fatalf("failed to open conn to tsv db: %s", err.msg)
     }
+    // if err := db.write(writer, tdb); err.id != error.NONE {
+    //     log.fatalf("failed to write tsv db to writer: %s", err.msg)
+    // }
 
-    output_tdb_header(reader)
+    // output_tdb_header(reader)
 
     fr := frame.create(3, 3)
     defer frame.destroy(fr)
     frame.fill_random(fr)
 
     for i := 0; i < 10; i += 1 {
-        if err := db.save_frame(writer, &tdb, fr); err.id != error.NONE {
+        if err := db.save_frame(tdb, fr); err.id != error.NONE {
             log.fatalf("failed to write frame to tsv db: %s", err.msg)
         }
     }
