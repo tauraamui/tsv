@@ -41,7 +41,7 @@ read_sized :: proc(reader: Reader, data: []u8) -> (bool, ExternalError) {
 		read, err = reader.reader_fn(reader.reader_context, data[n:])
 		if read == 0 && err.id == error.NONE {
 			return false, ExternalError{
-				id=error.READING_EMPTY,
+				id=error.EARLY_EOF,
 				msg="unable to read data from empty loc",
 			}
 		}

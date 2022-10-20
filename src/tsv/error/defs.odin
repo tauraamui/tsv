@@ -13,4 +13,4 @@ READ:           ID: 2
 WRITE:          ID: 3
 
 UNKNOWN_HEADER: ID: 4
-READING_EMPTY:  ID: 5
+EARLY_EOF:      ID: 5
