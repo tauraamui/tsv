@@ -37,6 +37,8 @@ new_db :: proc(writer: tsv.Writer, reader: tsv.Reader) -> (Connection, error.Err
     db.header = h
     /* --------------------------------------------------- */
 
+    db.event_manager = event.new_manager(writer, reader)
+
     return db, no_err
 }
 
