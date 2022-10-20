@@ -18,25 +18,36 @@ no_err :: error.Error{id=error.NONE}
 Connection :: ^DB
 
 DB :: struct {
-    writer: tsv.Writer,
-    reader: tsv.Reader,
-    header: Header,
+    writer:        tsv.Writer,
+    reader:        tsv.Reader,
+    header:        Header,
+    event_manager: ^event.Manager,
 }
 
 new_db :: proc(writer: tsv.Writer, reader: tsv.Reader) -> (Connection, error.Error) {
-    db := DB{
-        writer=writer,
-        reader=reader,
-    }
+    db := new(DB)
+    db.writer = writer
+    db.reader = reader
 
-    h, err := resolve_header(&db)
+    /* ---- load or create header and update db's ref ---- */
+    h, err := resolve_header(db)
     if err.id != error.NONE {
         return nil, err
     }
-
     db.header = h
+    /* --------------------------------------------------- */
 
-    return &db, no_err
+    return db, no_err
+}
+
+close :: proc(tdb: Connection) {
+    if tdb == nil { return }
+
+    if tdb.event_manager != nil {
+        free(tdb.event_manager)
+    }
+
+    free(tdb)
 }
 
 @private

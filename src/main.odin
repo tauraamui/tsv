@@ -76,6 +76,7 @@ main :: proc() {
     if err.id != error.NONE {
         log.fatalf("failed to open conn to tsv db: %s", err.msg)
     }
+    defer db.close(tdb)
     // if err := db.write(writer, tdb); err.id != error.NONE {
     //     log.fatalf("failed to write tsv db to writer: %s", err.msg)
     // }
