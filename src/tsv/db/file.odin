@@ -9,14 +9,15 @@ import "shared:tsv/error"
 @(private)
 MAGIC :: 0x132BB6C
 
+@(private)
+no_err :: error.Error{id=error.NONE}
+
 Connection :: ^DB
 
 DB :: struct {
     writer: tsv.Writer,
     reader: tsv.Reader,
-    header:                   Header,
-    root_events_header:       event.SimpleEventBlockHeader,
-    // root_events_block_header: EventsBlockHeader,
+    header: Header,
 }
 
 new_db :: proc(writer: tsv.Writer, reader: tsv.Reader) -> (Connection, error.Error) {
@@ -32,9 +33,7 @@ new_db :: proc(writer: tsv.Writer, reader: tsv.Reader) -> (Connection, error.Err
 
     db.header = h
 
-    return &db, error.Error{
-        id=error.NONE,
-    }
+    return &db, no_err
 }
 
 @private
@@ -51,10 +50,10 @@ resolve_header :: proc(tdb: Connection) -> (Header, error.Error) {
         if ok, err := write_header(tdb.writer, h, ROOT_HEADER_POS); !ok {
             return Header{}, err
         }
-        return h, error.Error{id=error.NONE}
+        return h, no_err
     }
 
-    if existing_header.magic == MAGIC { return existing_header, error.Error{id=error.NONE} }
+    if existing_header.magic == MAGIC { return existing_header, no_err }
 
     return Header{}, error.Error{
         id=error.UNKNOWN_HEADER,
@@ -80,25 +79,23 @@ write :: proc(writer: tsv.Writer, tdb: DB) -> error.Error {
     //     }
     // }
 
-    return error.Error{
-        id=error.NONE,
-    }
+    return no_err
 }
 
-@private
-event_block_start :: proc(tdb: ^DB) -> uint32 {
-    return tdb.header.root_ei_pos + size_of(tdb.root_events_header)
-}
+// @private
+// event_block_start :: proc(tdb: ^DB) -> uint32 {
+//     return tdb.header.root_ei_pos + size_of(tdb.root_events_header)
+// }
 
-@private
-calc_existing_size :: proc(tdb: ^DB) -> uint32 {
-    return tdb.root_events_header.entries_count * size_of(event.EventBlockEntry)
-}
+// @private
+// calc_existing_size :: proc(tdb: ^DB) -> uint32 {
+//     return tdb.root_events_header.entries_count * size_of(event.EventBlockEntry)
+// }
 
-@private
-within_event_block_bounds :: proc(tdb: ^DB) -> bool {
-    return !(calc_existing_size(tdb) + size_of(event.EventBlockEntry) > event.MAX_EVENT_SIZE)
-}
+// @private
+// within_event_block_bounds :: proc(tdb: ^DB) -> bool {
+//     return !(calc_existing_size(tdb) + size_of(event.EventBlockEntry) > event.MAX_EVENT_SIZE)
+// }
 
 /* This proc needs to do a bunch of tasks, one by one probably
     1. Store event data entry in current event block
@@ -167,6 +164,7 @@ save_frame :: proc(tdb: ^DB, fr: frame.Frame) -> error.Error {
     }
 }
 
+/*
 read :: proc(reader: tsv.Reader, dst: ^DB) -> error.Error {
     if ok, err := tsv.seek_reader(reader, 0); !ok {
         return error.Error{
@@ -207,3 +205,4 @@ read :: proc(reader: tsv.Reader, dst: ^DB) -> error.Error {
         id=error.NONE,
     }
 }
+*/

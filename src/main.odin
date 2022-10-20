@@ -93,13 +93,13 @@ main :: proc() {
     }
 }
 
-output_tdb_header :: proc(reader: tsv.Reader) {
-    read_tdb := new(db.DB)
-    defer free(read_tdb)
-    if err := db.read(reader, read_tdb); err.id != error.NONE {
-        log.fatalf("unable to open tsv db: %s", err.msg)
-    }
+// output_tdb_header :: proc(reader: tsv.Reader) {
+//     read_tdb := new(db.DB)
+//     defer free(read_tdb)
+//     if err := db.read(reader, read_tdb); err.id != error.NONE {
+//         log.fatalf("unable to open tsv db: %s", err.msg)
+//     }
 
-    log.info(read_tdb.header.magic)
-    log.info(read_tdb.root_events_header.entries_count)
-}
+//     log.info(read_tdb.header.magic)
+//     log.info(read_tdb.root_events_header.entries_count)
+// }
