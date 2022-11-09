@@ -5,6 +5,7 @@ import "shared:tsv"
 import "shared:tsv/frame"
 import "shared:tsv/event"
 import "shared:tsv/error"
+import "core:log"
 
 @(private)
 MAGIC :: 0x132BB6C
@@ -56,11 +57,11 @@ close :: proc(tdb: Connection) {
 resolve_header :: proc(tdb: Connection) -> (Header, error.Error) {
     existing_header, err := read_header(tdb.reader)
 
-    if err.id != error.NONE && err.id != error.EARLY_EOF {
+    if err.id != error.NONE && err.id != error.EARLY_EOF && err.id != error.NOT_ENOUGH_DATA {
         return Header{}, err
     }
 
-    if err.id == error.EARLY_EOF {
+    if err.id == error.EARLY_EOF || err.id == error.NOT_ENOUGH_DATA {
         h := Header{magic=MAGIC}
         h.root_ei_pos = size_of(h)
         if ok, err := write_header(tdb.writer, h, ROOT_HEADER_POS); !ok {

@@ -5,6 +5,7 @@ import "shared:bytes"
 import "shared:tsv"
 import "shared:typalias"
 import "shared:tsv/error"
+import "core:log"
 
 @(private)
 Header :: struct {

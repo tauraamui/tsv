@@ -31,6 +31,15 @@ os_read :: proc(handle: rawptr, data: []byte) -> (int, tsv.ExternalError) {
     return a, err
 }
 
+os_size :: proc(handle: rawptr) -> (int, tsv.ExternalError) {
+    ptr := cast(^os.Handle)handle
+    s, b := os.file_size(ptr^)
+    err := tsv.ExternalError{
+        id=cast(error.ID)b,
+    }
+    return int(s), err
+}
+
 os_write :: proc(handle: rawptr, data: []byte) -> (int, tsv.ExternalError) {
 	ptr := cast(^os.Handle)handle
 	a, b := os.write(ptr^, data)
@@ -58,13 +67,13 @@ Tsv_Logger_Opts :: log.Options{
 }
 
 main :: proc() {
-    f, os_err := os.open(TEST_FILE_PATH, os.O_RDWR|os.O_CREATE|os.O_TRUNC, MODE_PERM)
+    f, os_err := os.open(TEST_FILE_PATH, os.O_RDWR|os.O_CREATE, MODE_PERM)
     if os_err != os.ERROR_NONE {
         fmt.printf("error: %d\n", os_err)
     }
     defer os.close(f)
 
-    reader := tsv.make_reader(os_read, os_seek, cast(rawptr)&f)
+    reader := tsv.make_reader(os_read, os_seek, os_size, cast(rawptr)&f)
     writer := tsv.make_writer(os_write, os_seek, cast(rawptr)&f)
 
     logger := log.create_console_logger(log.Level.Debug, Tsv_Logger_Opts)
